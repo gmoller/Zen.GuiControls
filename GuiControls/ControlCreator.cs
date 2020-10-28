@@ -11,18 +11,19 @@ namespace Zen.GuiControls
 {
     public static class ControlCreator
     {
-        public static IControl CreateFromResource(string resourceName)
+        public static Controls CreateFromResource(string resourceName)
         {
             var spec = ReadResource(resourceName);
-            var control = CreateFromSpecification(spec);
+            var controls = CreateFromSpecification(spec);
 
-            return control;
+            return controls;
         }
 
         private static string ReadResource(string resourceName)
         {
-            //var assembly = Assembly.GetExecutingAssembly();
             var assembly = Assembly.GetEntryAssembly();
+
+            if (assembly is null) throw new InvalidOperationException($"Failed to get stream for [{resourceName}]");
 
             using var stream = assembly.GetManifestResourceStream(resourceName);
             using var reader = new StreamReader(stream ?? throw new InvalidOperationException($"Failed to get stream for [{resourceName}]"));
@@ -31,7 +32,7 @@ namespace Zen.GuiControls
             return result;
         }
 
-        public static IControl CreateFromSpecification(string spec)
+        public static Controls CreateFromSpecification(string spec)
         {
             var allTheLines = spec.SplitToLines().ToArray();
             var potentialControls = GetPotentialControls(allTheLines);
@@ -47,29 +48,19 @@ namespace Zen.GuiControls
                 switch (type)
                 {
                     case "Label":
-                        var control1 = new Label(name, state["FontName"]);
-                        if (state.ContainsKey("BorderColor")) control1.BorderColor = TranslateColor(state["BorderColor"]);
-                        if (state.ContainsKey("ContentAlignment")) control1.ContentAlignment = TranslateAlignment(state["ContentAlignment"]);
-                        if (state.ContainsKey("Size")) control1.Size = TranslateSize(state["Size"]);
-                        if (state.ContainsKey("Text")) control1.Text = state["Text"];
-                        if (state.ContainsKey("TextColor")) control1.TextColor = TranslateColor(state["TextColor"]);
-                        if (state.ContainsKey("TextShadowColor")) control1.TextShadowColor = TranslateColor(state["TextShadowColor"]);
-                        if (state.ContainsKey("Position")) control1.SetPosition(TranslatePosition(state["Position"]));
+                        var control1 = InstantiateLabel(name, state);
                         var containsList1 = TranslateContains(state);
                         staging.Add(name, (control1, containsList1));
                         break;
                     case "Button":
-                        var control2 = new Button(name);
-                        if (state.ContainsKey("Color")) control2.Color = TranslateColor(state["Color"]);
-                        if (state.ContainsKey("Size")) control2.Size = TranslateSize(state["Size"]);
-                        if (state.ContainsKey("Position")) control2.SetPosition(TranslatePosition(state["Position"]));
+                        var control2 = InstantiateButton(name, state);
                         var containsList2 = TranslateContains(state);
+                        var packagesList = TranslatePackages(state);
+                        control2.AddPackages(packagesList);
                         staging.Add(name, (control2, containsList2));
                         break;
                     case "Frame":
-                        var textureName = state.ContainsKey("TextureName") ? state["TextureName"] : string.Empty;
-                        var control3 = new Frame(name, textureName);
-                        if (state.ContainsKey("Size")) control3.Size = TranslateSize(state["Size"]);
+                        var control3 = InstantiateFrame(name, state);
                         var containsList3 = TranslateContains(state);
                         staging.Add(name, (control3, containsList3));
 
@@ -89,15 +80,49 @@ namespace Zen.GuiControls
             }
 
             // return the one(s) that don't have a parent
+            var list = new Controls();
             foreach (var control in staging.Values)
             {
                 if (control.control.Parent is null)
                 {
-                    return control.control;
+                    list.Add(control.control.Name, control.control);
                 }
             }
 
-            return null;
+            return list;
+        }
+
+        private static Label InstantiateLabel(string name, Dictionary<string, string> state)
+        {
+            var control = new Label(name, state["FontName"]);
+            if (state.ContainsKey("BorderColor")) control.BorderColor = TranslateColor(state["BorderColor"]);
+            if (state.ContainsKey("ContentAlignment")) control.ContentAlignment = TranslateAlignment(state["ContentAlignment"]);
+            if (state.ContainsKey("Size")) control.Size = TranslateSize(state["Size"]);
+            if (state.ContainsKey("Text")) control.Text = state["Text"];
+            if (state.ContainsKey("TextColor")) control.TextColor = TranslateColor(state["TextColor"]);
+            if (state.ContainsKey("TextShadowColor")) control.TextShadowColor = TranslateColor(state["TextShadowColor"]);
+            if (state.ContainsKey("Position")) control.SetPosition(TranslatePosition(state["Position"]));
+
+            return control;
+        }
+
+        private static Button InstantiateButton(string name, Dictionary<string, string> state)
+        {
+            var control = new Button(name);
+            if (state.ContainsKey("Color")) control.Color = TranslateColor(state["Color"]);
+            if (state.ContainsKey("Size")) control.Size = TranslateSize(state["Size"]);
+            if (state.ContainsKey("Position")) control.SetPosition(TranslatePosition(state["Position"]));
+
+            return control;
+        }
+
+        private static Frame InstantiateFrame(string name, Dictionary<string, string> state)
+        {
+            var textureName = state.ContainsKey("TextureName") ? state["TextureName"] : string.Empty;
+            var control = new Frame(name, textureName);
+            if (state.ContainsKey("Size")) control.Size = TranslateSize(state["Size"]);
+
+            return control;
         }
 
         private static Color TranslateColor(string colorAsString)
@@ -139,12 +164,25 @@ namespace Zen.GuiControls
             var containsList = new List<string>();
             if (state.ContainsKey("Contains"))
             {
-                var cont = state["Contains"].Trim('[').Trim(']');
+                var cont = state["Contains"].RemoveFirstAndLastCharacters();
                 var contains = cont.Split(';');
                 containsList.AddRange(contains);
             }
 
             return containsList;
+        }
+
+        private static List<string> TranslatePackages(Dictionary<string, string> state)
+        {
+            var packagesList = new List<string>();
+            if (state.ContainsKey("Packages"))
+            {
+                var pack = state["Packages"].RemoveFirstAndLastCharacters();
+                var packages = pack.Split(';');
+                packagesList.AddRange(packages);
+            }
+
+            return packagesList;
         }
 
         private static Dictionary<string, (string controlType, Dictionary<string, string> state)> GetPotentialControls(string[] allTheLines)

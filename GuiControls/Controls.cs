@@ -9,16 +9,17 @@ using Zen.Utilities;
 
 namespace Zen.GuiControls
 {
-    public class ChildControls : IEnumerable<IControl>
+    public class Controls : IEnumerable<IControl>
     {
         private Dictionary<string, IControl> ChildControlsList { get; }
 
-        internal ChildControls()
+        internal Controls()
         {
             ChildControlsList = new Dictionary<string, IControl>();
         }
 
         public IControl this[int index] => ChildControlsList.Values.ElementAt(index);
+        public IControl this[string name] => FindControl(name);
         private int Count => ChildControlsList.Count;
 
         internal void Add(string key, IControl control)

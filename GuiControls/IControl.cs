@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System.Collections.Generic;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Zen.Input;
@@ -6,8 +7,14 @@ using Zen.Utilities;
 
 namespace Zen.GuiControls
 {
-    public interface IControl
+    public interface IControl : IIdentifiedById
     {
+        /// <summary>
+        /// Name of the control.
+        /// This will be used as a dictionary key if control is added to a parent.
+        /// </summary>
+        public string Name { get; }
+
         /// <summary>
         /// Parent control that "owns" this control.
         /// </summary>
@@ -26,7 +33,7 @@ namespace Zen.GuiControls
         /// <summary>
         /// Enumerable list of all child controls "owned" by this control.
         /// </summary>
-        ChildControls ChildControls { get; }
+        Controls ChildControls { get; }
 
         /// <summary>
         /// Indexer by index to get a child control.
@@ -43,12 +50,6 @@ namespace Zen.GuiControls
         /// <param name="key">Key child control name)</param>
         /// <returns>Child control</returns>
         IControl this[string key] { get; }
-
-        /// <summary>
-        /// Name of the control.
-        /// This will be used as a dictionary key if control is added to a parent.
-        /// </summary>
-        string Name { get; }
 
         /// <summary>
         /// Position of this controls Top, relative to the top of the screen.
@@ -122,6 +123,7 @@ namespace Zen.GuiControls
         PointI Size { get; set; }
 
         void AddPackage(IPackage package);
+        void AddPackages(List<string> packages);
         void AddControl(Control childControl, Alignment parentAlignment = Alignment.TopLeft, Alignment childAlignment = Alignment.None, PointI offset = new PointI());
         void SetPosition(PointI point);
         void MovePosition(PointI point);

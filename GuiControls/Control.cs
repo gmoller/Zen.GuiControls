@@ -1,4 +1,6 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using System.Collections.Generic;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Zen.Input;
@@ -9,9 +11,12 @@ namespace Zen.GuiControls
     public abstract class Control : IControl
     {
         #region State
+        public int Id { get; }
+        public string Name { get; }
+
         public ControlStatus Status { get; set; }
         public bool Enabled { get; set; }
-        public ChildControls ChildControls { get; }
+        public Controls ChildControls { get; }
 
         /// <summary>
         /// Qualifies the position, is that position TopLeft, Center, etc. ?
@@ -24,8 +29,6 @@ namespace Zen.GuiControls
         public PointI Size { get; set; }
         public IControl Parent { get; set; }
         public float LayerDepth { get; set; }
-
-        public string Name { get; }
 
         /// <summary>
         /// Position of control.
@@ -46,7 +49,7 @@ namespace Zen.GuiControls
             Status = ControlStatus.None;
             Enabled = true;
 
-            ChildControls = new ChildControls();
+            ChildControls = new Controls();
             Packages = new Packages();
         }
 
@@ -74,6 +77,54 @@ namespace Zen.GuiControls
         public IControl this[int index] => ChildControls[index];
         public IControl this[string key] => ChildControls.FindControl(key);
         #endregion
+
+        /// <summary>
+        /// Adds packages to this control.
+        /// </summary>
+        /// <param name="packages">Packages to add</param>
+        public void AddPackages(List<string> packages)
+        {
+            foreach (var package in packages)
+            {
+                AddPackage(package);
+            }
+        }
+
+        /// <summary>
+        /// Adds packages to this control.
+        /// </summary>
+        /// <param name="packages">Packages to add</param>
+        public void AddPackages(List<IPackage> packages)
+        {
+            foreach (var package in packages)
+            {
+                AddPackage(package);
+            }
+        }
+
+        /// <summary>
+        /// Add a package to this control.
+        /// </summary>
+        /// <param name="package">Package to add e.g. (Zen.GuiControls.PackagesClasses.ControlClick, Zen.GuiControls - Game1.EventHandlers, Game1 - ApplySettings)</param>
+        public void AddPackage(string package)
+        {
+            var pack = package.Split('-');
+
+            var assemblyQualifiedName = pack[1].Trim();
+            var objectType = Type.GetType(assemblyQualifiedName);
+            var instantiatedObject = Activator.CreateInstance(objectType ?? throw new InvalidOperationException($"Failed to GetType for [{assemblyQualifiedName}]"));
+
+            var methodName = pack[2].Trim();
+            var actionMethodInfo = objectType.GetMethod(methodName);
+            var action = (Action<object, EventArgs>)Delegate.CreateDelegate(typeof(Action<object, EventArgs>), instantiatedObject, actionMethodInfo ?? throw new InvalidOperationException($"Failed to GetMethod for {methodName}"));
+
+            assemblyQualifiedName = pack[0].Trim();
+            objectType = Type.GetType(assemblyQualifiedName);
+            instantiatedObject = Activator.CreateInstance(objectType ?? throw new InvalidOperationException($"Failed to GetType for [{assemblyQualifiedName}]"), action);
+
+            var packageToAdd = (IPackage)instantiatedObject;
+            AddPackage(packageToAdd);
+        }
 
         /// <summary>
         /// Add a package to this control.

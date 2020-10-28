@@ -11,6 +11,11 @@ namespace Zen.GuiControls.PackagesClasses
 
         private readonly Action<object, EventArgs> _action;
 
+        public ControlClick()
+        {
+            _action = null;
+        }
+
         public ControlClick(Action<object, EventArgs> action)
         {
             _action = action;
