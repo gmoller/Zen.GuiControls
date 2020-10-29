@@ -25,7 +25,7 @@ namespace Zen.GuiControls
             };
             frame.SetPosition(position.ToPointI());
             AddControl(frame);
-            frame.AddControl(new Image("background", size - new Vector2(16.0f,16.0f), "TransparentBackground"), Alignment.MiddleCenter, Alignment.MiddleCenter);
+            frame.AddControl(new Image("TransparentBackground", "background"), Alignment.MiddleCenter, Alignment.MiddleCenter);
             //frame.AddControl(new Label("lblId", new Vector2(100.0f, 30.0f), "Id:", "Arial-12", Color.Yellow), Alignment.TopLeft, Alignment.TopLeft, new PointI(15, 15));
             //frame.AddControl(new Label("lblState", new Vector2(100.0f, 30.0f), "State:", "Arial-12", Color.Yellow), Alignment.TopLeft, Alignment.TopLeft, new PointI(15, 45));
             //frame.AddControl(new Label("lblStackStatus", new Vector2(100.0f, 30.0f), "StackStatus:", "Arial-12", Color.Yellow), Alignment.TopLeft, Alignment.TopLeft, new PointI(15, 75));

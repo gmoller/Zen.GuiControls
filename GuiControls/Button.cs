@@ -10,13 +10,13 @@ namespace Zen.GuiControls
     public class Button : ControlWithMultipleTextures
     {
         /// <summary>
-        /// 
+        /// A lovely little button.
         /// </summary>
-        /// <param name="name">Name of button control.</param>
-        /// <param name="textureNormal"></param>
-        /// <param name="textureActive"></param>
-        /// <param name="textureHover"></param>
-        /// <param name="textureDisabled"></param>
+        /// <param name="name">Name of control.</param>
+        /// <param name="textureNormal">Texture to use for control.</param>
+        /// <param name="textureActive">Texture to use when button is active.</param>
+        /// <param name="textureHover">Texture to use when button is hovered over.</param>
+        /// <param name="textureDisabled">Texture to use when button is disabled.</param>
         public Button(
             string name,
             string textureNormal = "",

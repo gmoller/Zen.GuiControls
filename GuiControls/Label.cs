@@ -15,38 +15,35 @@ namespace Zen.GuiControls
         #region State
         public Alignment ContentAlignment { get; set; }
         public string Text { get; set; }
+        public Func<string> GetTextFunc { get; set; }
         public Color TextColor { get; set; }
         public Color? TextShadowColor { get; set; }
-        public Color? BackColor { get; set; }
+        public Color? BackgroundColor { get; set; }
         public Color? BorderColor { get; set; }
         public float Scale { get; set; }
 
         private string FontName { get; }
-        private Func<string> GetTextFunc { get; }
         private SpriteFont Font { get; set; }
         #endregion
 
         /// <summary>
-        /// 
+        /// An awesome little label.
         /// </summary>
-        /// <param name="name">Name of label control.</param>
-        /// <param name="fontName"></param>
-        /// <param name="getTextFunc"></param>
+        /// <param name="name">Name of control.</param>
+        /// <param name="fontName">Font to use for label text.</param>
         public Label(
             string name,
-            string fontName,
-            Func<string> getTextFunc = null) : 
+            string fontName) : 
             base(name)
         {
             ContentAlignment = Alignment.TopLeft;
             Text = string.Empty;
             TextColor = Color.White;
             TextShadowColor = null;
-            BackColor = null;
+            BackgroundColor = null;
             BorderColor = null;
             Scale = 1.0f;
             FontName = fontName;
-            GetTextFunc = getTextFunc;
         }
 
         public override void LoadContent(ContentManager content, bool loadChildrenContent = false)
@@ -71,11 +68,11 @@ namespace Zen.GuiControls
 
         protected override void InDraw(SpriteBatch spriteBatch)
         {
-            if (BackColor != null)
+            if (BackgroundColor != null)
             {
                 spriteBatch.FillRectangle(
-                    ActualDestinationRectangle, 
-                    BackColor.Value, 
+                    ActualDestinationRectangle,
+                    BackgroundColor.Value, 
                     LayerDepth);
             }
 

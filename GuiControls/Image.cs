@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Zen.MonoGameUtilities.ExtensionMethods;
 
 namespace Zen.GuiControls
 {
@@ -8,47 +9,23 @@ namespace Zen.GuiControls
     public class Image : ControlWithSingleTexture
     {
         /// <summary>
-        /// Use this constructor if Image is to be used as a child of another control.
-        /// When a control is a child of another control, it's position will be relative
-        /// to the parent control. Therefore there is no need to pass in a position.
+        /// An amazing little image.
         /// </summary>
-        /// <param name="name"></param>
-        /// <param name="size"></param>
-        /// <param name="textureName"></param>
+        /// <param name="name">Name of control.</param>
+        /// <param name="textureName">Texture to use for control.</param>
         public Image(
             string name,
-            Vector2 size,
-            string textureName = null) :
-            this(
-                Vector2.Zero,
-                Alignment.TopLeft,
-                size,
-                textureName,
-                name)
-        {
-        }
-
-        /// <summary>
-        /// Use this constructor if Image is expected to be stand alone (have no parent).
-        /// </summary>
-        /// <param name="position"></param>
-        /// <param name="positionAlignment"></param>
-        /// <param name="size"></param>
-        /// <param name="textureName"></param>
-        /// <param name="name"></param>
-        public Image(
-            Vector2 position,
-            Alignment positionAlignment,
-            Vector2 size,
-            string textureName,
-            string name = null) :
+            string textureName = "") :
             base(textureName, name)
         {
         }
 
         protected override void InDraw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(Texture, ActualDestinationRectangle, SourceRectangle, Color, 0.0f, Vector2.Zero, SpriteEffects.None, LayerDepth);
+            if (Texture.HasValue())
+            {
+                spriteBatch.Draw(Texture, ActualDestinationRectangle, SourceRectangle, Color, 0.0f, Vector2.Zero, SpriteEffects.None, LayerDepth);
+            }
         }
     }
 }

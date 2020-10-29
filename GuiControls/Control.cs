@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Zen.Input;
+using Zen.MonoGameUtilities.ExtensionMethods;
 using Zen.Utilities;
 
 namespace Zen.GuiControls
@@ -105,24 +106,19 @@ namespace Zen.GuiControls
         /// <summary>
         /// Add a package to this control.
         /// </summary>
-        /// <param name="package">Package to add e.g. (Zen.GuiControls.PackagesClasses.ControlClick, Zen.GuiControls - Game1.EventHandlers, Game1 - ApplySettings)</param>
+        /// <param name="package">Package to add. For example: 'Zen.GuiControls.PackagesClasses.ControlClick, Zen.GuiControls - Game1.EventHandlers, Game1 - ApplySettings'</param>
         public void AddPackage(string package)
         {
             var pack = package.Split('-');
 
-            var assemblyQualifiedName = pack[1].Trim();
-            var objectType = Type.GetType(assemblyQualifiedName);
-            var instantiatedObject = Activator.CreateInstance(objectType ?? throw new InvalidOperationException($"Failed to GetType for [{assemblyQualifiedName}]"));
+            var assemblyQualifiedName1 = pack[1].Trim(); // Game1.EventHandlers, Game1
+            var methodName = pack[2].Trim(); // ApplySettings
+            var action = ObjectCreator.CreateActionDelegate(assemblyQualifiedName1, methodName);
 
-            var methodName = pack[2].Trim();
-            var actionMethodInfo = objectType.GetMethod(methodName);
-            var action = (Action<object, EventArgs>)Delegate.CreateDelegate(typeof(Action<object, EventArgs>), instantiatedObject, actionMethodInfo ?? throw new InvalidOperationException($"Failed to GetMethod for {methodName}"));
+            var assemblyQualifiedName2 = pack[0].Trim(); // Zen.GuiControls.PackagesClasses.ControlClick, Zen.GuiControls
+            var instantiatedObject2 = ObjectCreator.CreateInstance(assemblyQualifiedName2, action);
 
-            assemblyQualifiedName = pack[0].Trim();
-            objectType = Type.GetType(assemblyQualifiedName);
-            instantiatedObject = Activator.CreateInstance(objectType ?? throw new InvalidOperationException($"Failed to GetType for [{assemblyQualifiedName}]"), action);
-
-            var packageToAdd = (IPackage)instantiatedObject;
+            var packageToAdd = (IPackage)instantiatedObject2;
             AddPackage(packageToAdd);
         }
 
@@ -155,6 +151,7 @@ namespace Zen.GuiControls
             var topLeft = ControlHelper.DetermineTopLeft(childControl, parentAlignment, childAlignment, offset, Position, PositionAlignment, Size);
 
             childControl.SetPosition(topLeft);
+            childControl.PositionAlignment = Alignment.TopLeft;
             ChildControls.Add(childControl.Name, childControl);
         }
 
@@ -165,7 +162,7 @@ namespace Zen.GuiControls
         public virtual void SetPosition(PointI point)
         {
             ChildControls.SetTopLeftPosition(point);
-            Position = ControlHelper.DetermineTopLeft(new Vector2(point.X, point.Y), PositionAlignment, Size);
+            Position = point.ToVector2();
         }
 
         /// <summary>

@@ -30,6 +30,7 @@ namespace Zen.GuiControls
             if (Status == ControlStatus.Active)
             {
                 SetTexture(TextureActive);
+                return;
             }
 
             string texture;
