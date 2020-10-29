@@ -1,26 +1,17 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <Version>0.1.0</Version>
+    <Authors>Greg Moller</Authors>
+    <Company>Zen</Company>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.0.1641" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Zen.Assets">
-      <HintPath>..\..\ZenAssets\Assets\bin\Debug\netcoreapp3.1\Zen.Assets.dll</HintPath>
-    </Reference>
-    <Reference Include="Zen.Input">
-      <HintPath>..\..\ZenInput\Input\bin\Debug\netcoreapp3.1\Zen.Input.dll</HintPath>
-    </Reference>
-    <Reference Include="Zen.MonoGameUtilities">
-      <HintPath>..\..\ZenMonoGameUtilities\MonoGameUtilities\bin\Debug\netcoreapp3.1\Zen.MonoGameUtilities.dll</HintPath>
-    </Reference>
-    <Reference Include="Zen.Utilities">
-      <HintPath>..\..\ZenUtilities\Utilities\bin\Debug\netcoreapp3.1\Zen.Utilities.dll</HintPath>
-    </Reference>
+    <PackageReference Include="Zen.Assets" Version="0.1.0" />
+    <PackageReference Include="Zen.Input" Version="0.1.0" />
+    <PackageReference Include="Zen.MonoGameUtilities" Version="0.1.0" />
   </ItemGroup>
 
 </Project>
