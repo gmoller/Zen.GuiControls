@@ -54,6 +54,7 @@ namespace Zen.GuiControls
                 staging.Add(name, (control, containsList));
             }
 
+            // handle contains
             foreach (var control in staging.Values)
             {
                 foreach (var item in control.contains)
@@ -90,6 +91,9 @@ namespace Zen.GuiControls
                 case "Frame":
                     control = InstantiateFrame(name, state);
                     break;
+                case "Image":
+                    control = InstantiateImage(name, state);
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(type), type, $"ControlType {type} is not supported.");
             }
@@ -103,6 +107,9 @@ namespace Zen.GuiControls
             if (state.ContainsKey("PositionAlignment")) control.PositionAlignment = TranslateAlignment(state["PositionAlignment"]);
             if (state.ContainsKey("Position")) control.SetPosition(TranslatePosition(state["Position"]));
             if (state.ContainsKey("Size")) control.Size = TranslateSize(state["Size"]);
+            if (state.ContainsKey("LayerDepth")) control.LayerDepth = Convert.ToSingle(state["LayerDepth"]);
+            if (state.ContainsKey("Enabled")) control.Enabled = Convert.ToBoolean(state["Enabled"]);
+
             if (state.ContainsKey("ContentAlignment")) control.ContentAlignment = TranslateAlignment(state["ContentAlignment"]);
             if (state.ContainsKey("Text")) control.Text = state["Text"];
             if (state.ContainsKey("GetTextFunc")) control.GetTextFunc = TranslateGetTextFunc(state["GetTextFunc"]);
@@ -111,8 +118,6 @@ namespace Zen.GuiControls
             if (state.ContainsKey("BackgroundColor")) control.BackgroundColor = TranslateColor(state["BackgroundColor"]);
             if (state.ContainsKey("BorderColor")) control.BorderColor = TranslateColor(state["BorderColor"]);
             if (state.ContainsKey("Scale")) control.Scale = Convert.ToSingle(state["Scale"]);
-            if (state.ContainsKey("LayerDepth")) control.LayerDepth = Convert.ToSingle(state["LayerDepth"]);
-            if (state.ContainsKey("Enabled")) control.Enabled = Convert.ToBoolean(state["Enabled"]);
 
             return control;
         }
@@ -128,9 +133,10 @@ namespace Zen.GuiControls
             if (state.ContainsKey("PositionAlignment")) control.PositionAlignment = TranslateAlignment(state["PositionAlignment"]);
             if (state.ContainsKey("Position")) control.SetPosition(TranslatePosition(state["Position"]));
             if (state.ContainsKey("Size")) control.Size = TranslateSize(state["Size"]);
-            if (state.ContainsKey("Color")) control.Color = TranslateColor(state["Color"]);
             if (state.ContainsKey("LayerDepth")) control.LayerDepth = Convert.ToSingle(state["LayerDepth"]);
             if (state.ContainsKey("Enabled")) control.Enabled = Convert.ToBoolean(state["Enabled"]);
+
+            if (state.ContainsKey("Color")) control.Color = TranslateColor(state["Color"]);
 
             return control;
         }
@@ -138,8 +144,28 @@ namespace Zen.GuiControls
         private static Frame InstantiateFrame(string name, Dictionary<string, string> state)
         {
             var textureName = state.ContainsKey("TextureName") ? state["TextureName"] : string.Empty;
+            var topPadding = state.ContainsKey("TopPadding") ? Convert.ToInt32(state["TopPadding"]) : 0;
+            var bottomPadding = state.ContainsKey("BottomPadding") ? Convert.ToInt32(state["BottomPadding"]) : 0;
+            var leftPadding = state.ContainsKey("LeftPadding") ? Convert.ToInt32(state["LeftPadding"]) : 0;
+            var rightPadding = state.ContainsKey("RightPadding") ? Convert.ToInt32(state["RightPadding"]) : 0;
 
-            var control = new Frame(name, textureName);
+            var control = new Frame(name, textureName, topPadding, bottomPadding, leftPadding, rightPadding);
+            if (state.ContainsKey("PositionAlignment")) control.PositionAlignment = TranslateAlignment(state["PositionAlignment"]);
+            if (state.ContainsKey("Position")) control.SetPosition(TranslatePosition(state["Position"]));
+            if (state.ContainsKey("Size")) control.Size = TranslateSize(state["Size"]);
+            if (state.ContainsKey("LayerDepth")) control.LayerDepth = Convert.ToSingle(state["LayerDepth"]);
+            if (state.ContainsKey("Enabled")) control.Enabled = Convert.ToBoolean(state["Enabled"]);
+
+            return control;
+        }
+
+        private static IControl InstantiateImage(string name, Dictionary<string, string> state)
+        {
+            var textureName = state.ContainsKey("TextureName") ? state["TextureName"] : string.Empty;
+
+            var control = new Image(name, textureName);
+            if (state.ContainsKey("PositionAlignment")) control.PositionAlignment = TranslateAlignment(state["PositionAlignment"]);
+            if (state.ContainsKey("Position")) control.SetPosition(TranslatePosition(state["Position"]));
             if (state.ContainsKey("Size")) control.Size = TranslateSize(state["Size"]);
 
             return control;
