@@ -71,55 +71,55 @@ To use:
     }
     spriteBatch.End();
     
-The file: Game1.PanelControls.txt
-lblTest : Label
-{
-  FontName: arial
-  Size: 100;50
-  ContentAlignment: BottomRight
-  Text: Test
-  GetTextFunc: 'Game1.EventHandlers.GetTextFunc'
-  TextColor: Aqua
-  TextShadowColor: White
-  BackgroundColor: %backgroundColor%
-  BorderColor: Red
-  PositionAlignment: BottomRight
-  Position: 100;50
-  Scale: 1.0
-  LayerDepth: 0.0
-  Enabled: true
-  Packages: ['Zen.GuiControls.PackagesClasses.ControlClick, Zen.GuiControls - Game1.EventHandlers.ApplySettings']
-}
-
-lblApply : Label
-{
-  FontName: arial
-  Size: 100;25
-  Text: Apply
-  TextColor: CornflowerBlue
-  ContentAlignment: MiddleCenter
-}
-
-btnApply : Button
-{
-  TextureNormal: TextureNormal
-  TextureActive: TextureActive
-  TextureHover: TextureHover
-  TextureDisabled: TextureDisabled
-  Size: 100;25
-  Color: Green
-  PositionAlignment: TopLeft
-  Position: 50;200
-  LayerDepth: 1.0
-  Enabled: true
-  Contains: [lblApply]
-  Packages: ['Zen.GuiControls.PackagesClasses.ControlClick, Zen.GuiControls - Game1.EventHandlers.ApplySettings']
-}
-
-frmPanel : Frame
-{
-  Size: 200;500
-  Contains: [lblTest;btnApply]
+The file: Game1.PanelControls.txt  
+lblTest : Label  
+{  
+  FontName: arial  
+  Size: 100;50  
+  ContentAlignment: BottomRight  
+  Text: Test  
+  GetTextFunc: 'Game1.EventHandlers.GetTextFunc'  
+  TextColor: Aqua  
+  TextShadowColor: White  
+  BackgroundColor: %backgroundColor%  
+  BorderColor: Red  
+  PositionAlignment: BottomRight  
+  Position: 100;50  
+  Scale: 1.0  
+  LayerDepth: 0.0  
+  Enabled: true  
+  Packages: ['Zen.GuiControls.PackagesClasses.ControlClick, Zen.GuiControls - Game1.EventHandlers.ApplySettings']  
+}  
+  
+lblApply : Label  
+{  
+  FontName: arial  
+  Size: 100;25  
+  Text: Apply  
+  TextColor: CornflowerBlue  
+  ContentAlignment: MiddleCenter  
+}  
+  
+btnApply : Button  
+{  
+  TextureNormal: TextureNormal  
+  TextureActive: TextureActive  
+  TextureHover: TextureHover  
+  TextureDisabled: TextureDisabled  
+  Size: 100;25  
+  Color: Green  
+  PositionAlignment: TopLeft  
+  Position: 50;200  
+  LayerDepth: 1.0  
+  Enabled: true  
+  Contains: [lblApply]  
+  Packages: ['Zen.GuiControls.PackagesClasses.ControlClick, Zen.GuiControls - Game1.EventHandlers.ApplySettings']  
+}  
+  
+frmPanel : Frame  
+{  
+  Size: 200;500  
+  Contains: [lblTest;btnApply]  
 }
     
 # Developer
