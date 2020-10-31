@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Zen.Input;
 using Zen.MonoGameUtilities.ExtensionMethods;
 using Zen.Utilities;
+using Zen.Utilities.ExtensionMethods;
 
 namespace Zen.GuiControls
 {
@@ -109,17 +110,45 @@ namespace Zen.GuiControls
         /// <param name="package">Package to add. For example: 'Zen.GuiControls.PackagesClasses.ControlClick, Zen.GuiControls - Game1.EventHandlers, Game1 - ApplySettings'</param>
         public void AddPackage(string package)
         {
-            var pack = package.Split('-');
+            var firstAndLastCharactersRemoved = package.RemoveFirstAndLastCharacters();
+            var pack = firstAndLastCharactersRemoved.Split('-');
 
-            var assemblyQualifiedName1 = pack[1].Trim(); // Game1.EventHandlers, Game1
-            var methodName = pack[2].Trim(); // ApplySettings
-            var action = ObjectCreator.CreateActionDelegate(assemblyQualifiedName1, methodName);
+            if (pack.Length > 2)
+            {
+                var assemblyQualifiedName1 = pack[1].Trim(); // Game1.EventHandlers, Game1
+                var methodName = pack[2].Trim(); // ApplySettings
+                var action = ObjectCreator.CreateActionDelegate(assemblyQualifiedName1, methodName);
 
-            var assemblyQualifiedName2 = pack[0].Trim(); // Zen.GuiControls.PackagesClasses.ControlClick, Zen.GuiControls
-            var instantiatedObject2 = ObjectCreator.CreateInstance(assemblyQualifiedName2, action);
+                var assemblyQualifiedName2 = pack[0].Trim(); // Zen.GuiControls.PackagesClasses.ControlClick, Zen.GuiControls
+                var instantiatedObject2 = ObjectCreator.CreateInstance(assemblyQualifiedName2, action);
 
-            var packageToAdd = (IPackage)instantiatedObject2;
-            AddPackage(packageToAdd);
+                var packageToAdd = (IPackage) instantiatedObject2;
+                AddPackage(packageToAdd);
+            }
+            else
+            {
+                var outerMethod = pack[0];
+                var innerMethod = pack[1];
+                pack = pack[1].Split('.');
+
+                if (pack.Length > 1)
+                {
+                    var methodName = pack[^1].Trim(); // GetTextFunc
+                    var className = pack[^2].Trim(); // EventHandlers
+                    var nameSpace = innerMethod.Replace($".{methodName}", string.Empty).Replace($".{className}", string.Empty); // Game1
+                    var assemblyQualifiedName1 = $"{nameSpace}.{className}, {nameSpace}"; // Game1.EventHandlers, Game1
+                    var action = ObjectCreator.CreateActionDelegate(assemblyQualifiedName1, methodName);
+
+                    var assemblyQualifiedName2 = outerMethod; // Zen.GuiControls.PackagesClasses.ControlClick, Zen.GuiControls
+                    var instantiatedObject2 = ObjectCreator.CreateInstance(assemblyQualifiedName2, action);
+
+                    var packageToAdd = (IPackage)instantiatedObject2;
+                    AddPackage(packageToAdd);
+                }
+                else
+                {
+                }
+            }
         }
 
         /// <summary>

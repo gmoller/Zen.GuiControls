@@ -11,10 +11,23 @@ namespace Zen.GuiControls
 {
     public static class ControlCreator
     {
-        public static Controls CreateFromResource(string resourceName)
+        public static Controls CreateFromResource(string resourceName, params KeyValuePair<string, string>[] pairs)
         {
+            var controls = CreateFromResource(resourceName, pairs.ToList());
+
+            return controls;
+        }
+
+        public static Controls CreateFromResource(string resourceName, List<KeyValuePair<string, string>> pairs)
+        {
+            var pairsDictionary = new Dictionary<string, string>();
+            foreach (var pair in pairs)
+            {
+                pairsDictionary.Add(pair.Key, pair.Value);
+            }
+
             var spec = ReadResource(resourceName);
-            var controls = CreateFromSpecification(spec);
+            var controls = CreateFromSpecification(spec, pairs);
 
             return controls;
         }
@@ -32,10 +45,12 @@ namespace Zen.GuiControls
             return result;
         }
 
-        public static Controls CreateFromSpecification(string spec)
+        public static Controls CreateFromSpecification(string spec, List<KeyValuePair<string, string>> pairs)
         {
             var allTheLines = spec.SplitToLines().ToArray();
-            var potentialControls = GetPotentialControls(allTheLines);
+            var pairsDictionary = pairs.ToDictionary(pair => pair.Key, pair => pair.Value);
+
+            var potentialControls = GetPotentialControls(allTheLines, pairsDictionary);
 
             var staging = new Dictionary<string, (IControl control, List<string> contains)>();
 
@@ -205,15 +220,36 @@ namespace Zen.GuiControls
             return size;
         }
 
-        private static Func<string> TranslateGetTextFunc(string getTextFuncAsString)
+        private static Func<string> TranslateGetTextFunc(string getTextFuncAsString) // 'Game1.EventHandlers, Game1 - GetTextFunc' or 'Game1.EventHandlers.GetTextFunc'
         {
-            var split = getTextFuncAsString.Split('-');
+            var firstAndLastCharactersRemoved = getTextFuncAsString.RemoveFirstAndLastCharacters();
+            var split = firstAndLastCharactersRemoved.Split('-');
 
-            var assemblyQualifiedName1 = split[0].Trim(); // Game1.EventHandlers, Game1
-            var methodName = split[1].Trim(); // GetTextFunc
-            var func = ObjectCreator.CreateFuncDelegate(assemblyQualifiedName1, methodName);
+            if (split.Length > 1) // if 'Game1.EventHandlers, Game1 - GetTextFunc'
+            {
+                var assemblyQualifiedName = split[0].Trim(); // Game1.EventHandlers, Game1
+                var methodName = split[1].Trim(); // GetTextFunc
+                var func = ObjectCreator.CreateFuncDelegate(assemblyQualifiedName, methodName);
 
-            return func;
+                return func;
+            }
+            // else: 'Game1.EventHandlers.GetTextFunc'
+            split = split[0].Split('.');
+
+            if (split.Length > 1)
+            {
+                var methodName = split[^1].Trim(); // GetTextFunc
+                var className = split[^2].Trim(); // EventHandlers
+                var nameSpace = firstAndLastCharactersRemoved.Replace($".{methodName}", string.Empty).Replace($".{className}", string.Empty); // Game1
+                var assemblyQualifiedName = $"{nameSpace}.{className}, {nameSpace}"; // Game1.EventHandlers, Game1
+                var func = ObjectCreator.CreateFuncDelegate(assemblyQualifiedName, methodName);
+
+                return func;
+            }
+            else
+            {
+                return null;
+            }
         }
 
         private static List<string> TranslateContains(Dictionary<string, string> state)
@@ -242,11 +278,11 @@ namespace Zen.GuiControls
             return packagesList;
         }
 
-        private static Dictionary<string, (string controlType, Dictionary<string, string> state)> GetPotentialControls(string[] allTheLines)
+        private static Dictionary<string, (string controlType, Dictionary<string, string> state)> GetPotentialControls(string[] allTheLines, Dictionary<string, string> pairs)
         {
             var potentialControls = new Dictionary<string, (string controlType, Dictionary<string, string> state)>();
 
-            var controlName = string.Empty;
+            var currentControlName = string.Empty;
             var betweenSquirlies = false;
             for (var i = 0; i < allTheLines.Length; i++)
             {
@@ -255,23 +291,28 @@ namespace Zen.GuiControls
                 {
                     betweenSquirlies = true;
                     var controlNameAndType = allTheLines[i - 1];
-                    controlName = controlNameAndType.Split(':')[0].Trim();
+                    currentControlName = controlNameAndType.Split(':')[0].Trim();
                     var controlType = controlNameAndType.Split(':')[1].Trim();
                     (string controlType, Dictionary<string, string> state) state = (controlType, new Dictionary<string, string>());
-                    potentialControls.Add(controlName, state);
+                    potentialControls.Add(currentControlName, state);
                 }
                 else if (line.Trim().StartsWith("}"))
                 {
                     betweenSquirlies = false;
-                    controlName = string.Empty;
+                    currentControlName = string.Empty;
                 }
                 else
                 {
                     if (betweenSquirlies && line.Trim().HasValue())
                     {
-                        var potentialControl = potentialControls[controlName];
-                        var key = line.Split(':')[0].Trim();
-                        var value = line.Split(':')[1].Trim();
+                        var potentialControl = potentialControls[currentControlName];
+                        var key = line.GetTextToLeftOfCharacter(':').Trim();
+                        var value = line.GetTextToRightOfCharacter(':').Trim();
+                        if (value.StartsWith('%') && value.EndsWith('%'))
+                        {
+                            value = pairs[value.RemoveFirstAndLastCharacters()];
+                        }
+
                         potentialControl.state[key] = value;
                     }
                 }
