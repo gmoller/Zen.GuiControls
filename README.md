@@ -72,6 +72,7 @@ To use:
     }
     spriteBatch.End();
     
+<pre>
 The file: Game1.PanelControls.txt  
 lblTest : Label  
 {  
@@ -122,7 +123,8 @@ frmPanel : Frame
   Size: 200;500  
   Contains: [lblTest;btnApply]  
 }
-    
+</pre>
+
 # Developer
 Written by Greg Moller (greg.moller@gmail.com)
 
