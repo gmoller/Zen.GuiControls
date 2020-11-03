@@ -15,7 +15,7 @@ namespace Zen.GuiControls
         #region State
         public Alignment ContentAlignment { get; set; }
         public string Text { get; set; }
-        public Func<string> GetTextFunc { get; set; }
+        public Func<object, string> GetTextFunc { get; set; }
         public Color TextColor { get; set; }
         public Color? TextShadowColor { get; set; }
         public Color? BackgroundColor { get; set; }
@@ -60,7 +60,7 @@ namespace Zen.GuiControls
         {
             if (GetTextFunc != null)
             {
-                Text = GetTextFunc();
+                Text = GetTextFunc(this);
             }
 
             base.Update(input, deltaTime, viewport);
