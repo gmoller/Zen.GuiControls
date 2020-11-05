@@ -84,11 +84,13 @@ namespace Zen.GuiControls
         /// Adds packages to this control.
         /// </summary>
         /// <param name="packages">Packages to add</param>
-        public void AddPackages(List<string> packages)
+        /// <param name="callingTypeFullName"></param>
+        /// <param name="callingAssemblyFullName"></param>
+        public void AddPackages(List<string> packages, string callingTypeFullName, string callingAssemblyFullName)
         {
             foreach (var package in packages)
             {
-                AddPackage(package);
+                AddPackage(package, callingTypeFullName, callingAssemblyFullName);
             }
         }
 
@@ -108,35 +110,49 @@ namespace Zen.GuiControls
         /// Add a package to this control.
         /// </summary>
         /// <param name="package">Package to add. For example: 'Zen.GuiControls.PackagesClasses.ControlClick, Zen.GuiControls - Game1.EventHandlers, Game1 - ApplySettings'</param>
-        public void AddPackage(string package)
+        /// <param name="callingTypeFullName"></param>
+        /// <param name="callingAssemblyFullName"></param>
+        public void AddPackage(string package, string callingTypeFullName, string callingAssemblyFullName)
         {
-            var firstAndLastCharactersRemoved = package.RemoveFirstAndLastCharacters();
-            var pack = firstAndLastCharactersRemoved.Split('-');
+            var firstAndLastCharactersRemoved = package.RemoveFirstAndLastCharacters(); // remove single quotes
+            var split = firstAndLastCharactersRemoved.Split('-');
 
-            if (pack.Length > 2)
+            if (split.Length == 3)
             {
-                var assemblyQualifiedName1 = pack[1].Trim(); // Game1.EventHandlers, Game1
-                var methodName = pack[2].Trim(); // ApplySettings
+                var assemblyQualifiedName1 = split[1].Trim(); // Game1.EventHandlers, Game1
+                var methodName = split[2].Trim(); // ApplySettings
                 var action = ObjectCreator.CreateActionDelegate(assemblyQualifiedName1, methodName);
 
-                var assemblyQualifiedName2 = pack[0].Trim(); // Zen.GuiControls.PackagesClasses.ControlClick, Zen.GuiControls
+                var assemblyQualifiedName2 = split[0].Trim(); // Zen.GuiControls.PackagesClasses.ControlClick, Zen.GuiControls
                 var instantiatedObject2 = ObjectCreator.CreateInstance(assemblyQualifiedName2, action);
 
                 var packageToAdd = (IPackage) instantiatedObject2;
                 AddPackage(packageToAdd);
             }
-            else
+            else if (split.Length == 2)
             {
-                var outerMethod = pack[0];
-                var innerMethod = pack[1];
-                pack = pack[1].Split('.');
+                var outerMethod = split[0].Trim(); // Zen.GuiControls.PackagesClasses.ControlClick
+                var innerMethod = split[1].Trim(); // PhoenixGamePresentation.Views.SettlementViewComposite.MainFrameEventHandlers.CloseButtonClick
+                split = innerMethod.Split('.');
 
-                if (pack.Length > 1)
+                if (split.Length == 1)
                 {
-                    var methodName = pack[^1].Trim(); // GetTextFunc
-                    var className = pack[^2].Trim(); // EventHandlers
-                    var nameSpace = innerMethod.Replace($".{methodName}", string.Empty).Replace($".{className}", string.Empty); // Game1
-                    var assemblyQualifiedName1 = $"{nameSpace}.{className}, {nameSpace}"; // Game1.EventHandlers, Game1
+                    var methodName = split[0].Trim();
+                    var assemblyQualifiedName1 = $"{callingTypeFullName}, {callingAssemblyFullName}";
+                    var action = ObjectCreator.CreateActionDelegate(assemblyQualifiedName1, methodName);
+
+                    var assemblyQualifiedName2 = outerMethod;
+                    var instantiatedObject2 = ObjectCreator.CreateInstance(assemblyQualifiedName2, action);
+
+                    var packageToAdd = (IPackage)instantiatedObject2;
+                    AddPackage(packageToAdd);
+                }
+                else if (split.Length > 1)
+                {
+                    var methodName = split[^1].Trim(); // CloseButtonClick
+                    var className = split[^2].Trim(); // MainFrameEventHandlers
+                    var nameSpace = innerMethod.Replace($".{methodName}", string.Empty).Replace($".{className}", string.Empty); // PhoenixGamePresentation.Views.SettlementViewComposite
+                    var assemblyQualifiedName1 = $"{nameSpace}.{className}, {callingAssemblyFullName}"; // PhoenixGamePresentation.Views.SettlementViewComposite.MainFrameEventHandlers, PhoenixGamePresentation
                     var action = ObjectCreator.CreateActionDelegate(assemblyQualifiedName1, methodName);
 
                     var assemblyQualifiedName2 = outerMethod; // Zen.GuiControls.PackagesClasses.ControlClick, Zen.GuiControls
@@ -147,7 +163,12 @@ namespace Zen.GuiControls
                 }
                 else
                 {
+                    throw new Exception($"Badly formed package string. [{package}]");
                 }
+            }
+            else
+            {
+                throw new Exception($"Badly formed package string. [{package}]");
             }
         }
 

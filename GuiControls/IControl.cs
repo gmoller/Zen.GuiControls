@@ -123,7 +123,7 @@ namespace Zen.GuiControls
         PointI Size { get; set; }
 
         void AddPackage(IPackage package);
-        void AddPackages(List<string> packages);
+        void AddPackages(List<string> packages, string callingTypeFullName, string callingAssemblyFullName);
         void AddControl(Control childControl, Alignment parentAlignment = Alignment.TopLeft, Alignment childAlignment = Alignment.None, PointI offset = new PointI());
         void SetPosition(PointI point);
         void MovePosition(PointI point);

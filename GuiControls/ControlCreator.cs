@@ -11,58 +11,38 @@ namespace Zen.GuiControls
 {
     public static class ControlCreator
     {
-        public static Controls CreateFromFile(string path, params KeyValuePair<string, string>[] pairs)
-        {
-            var controls = CreateFromFile(path, pairs.ToList());
-
-            return controls;
-        }
-
         public static Controls CreateFromFile(string path, List<KeyValuePair<string, string>> pairs)
         {
+            var callingAssembly = Assembly.GetCallingAssembly();
             var spec = File.ReadAllText(path);
-            var controls = CreateFromSpecification(spec, pairs);
-
-            return controls;
-        }
-
-        public static Controls CreateFromResource(string resourceName, params KeyValuePair<string, string>[] pairs)
-        {
-            var controls = CreateFromResource(resourceName, pairs.ToList());
+            var controls = CreateFromSpecification(spec, pairs, 2);
 
             return controls;
         }
 
         public static Controls CreateFromResource(string resourceName, List<KeyValuePair<string, string>> pairs)
         {
-            var spec = ReadResource(resourceName);
-            var controls = CreateFromSpecification(spec, pairs);
+            var callingAssembly = Assembly.GetCallingAssembly();
+            var spec = ReadResource(resourceName, callingAssembly);
+            var controls = CreateFromSpecification(spec, pairs, 2);
 
             return controls;
         }
 
-        private static string ReadResource(string resourceName)
+        private static string ReadResource(string resourceName, Assembly callingAssembly)
         {
-            var assembly = Assembly.GetEntryAssembly();
-
-            if (assembly is null) throw new InvalidOperationException($"Failed to get stream for [{resourceName}]");
-
-            using var stream = assembly.GetManifestResourceStream(resourceName);
-            using var reader = new StreamReader(stream ?? throw new InvalidOperationException($"Failed to get stream for [{resourceName}] from Assembly [{assembly.FullName}]"));
+            using var stream = callingAssembly.GetManifestResourceStream(resourceName);
+            using var reader = new StreamReader(stream ?? throw new InvalidOperationException($"Failed to get stream for [{resourceName}] from Assembly [{callingAssembly.FullName}]"));
             var result = reader.ReadToEnd();
 
             return result;
         }
 
-        public static Controls CreateFromSpecification(string spec, params KeyValuePair<string, string>[] pairs)
+        public static Controls CreateFromSpecification(string spec, List<KeyValuePair<string, string>> pairs, int level = 1)
         {
-            var controls = CreateFromSpecification(spec, pairs.ToList());
+            // determine calling type
+            var callerType = ObjectCreator.GetCallerType(level);
 
-            return controls;
-        }
-
-        public static Controls CreateFromSpecification(string spec, List<KeyValuePair<string, string>> pairs)
-        {
             var allTheLines = spec.SplitToLines().ToArray();
             var pairsDictionary = pairs.ToDictionary(pair => pair.Key, pair => pair.Value);
 
@@ -75,10 +55,16 @@ namespace Zen.GuiControls
                 var type = potentialControl.Value.controlType;
                 var state = potentialControl.Value.state;
 
-                var control = InstantiateControl(name, type, state);
+                var control = InstantiateControl(name, type, state, callerType.callingTypeFullName, callerType.callingAssemblyFullName);
 
                 var packagesList = GetPackages(state);
-                control.AddPackages(packagesList);
+                var onClickEventHandler = GetOnClickEventHandler(state);
+                if (onClickEventHandler.HasValue())
+                {
+                    packagesList.Add(onClickEventHandler);
+                }
+
+                control.AddPackages(packagesList, callerType.callingTypeFullName, callerType.callingAssemblyFullName);
 
                 var containsList = GetContains(state);
                 staging.Add(name, (control, containsList));
@@ -116,6 +102,10 @@ namespace Zen.GuiControls
             for (var i = 0; i < allTheLines.Length; i++)
             {
                 var line = allTheLines[i];
+
+                if (line.Trim().StartsWith("//")) continue; // ignore comments
+                if (!line.Trim().HasValue()) continue; // ignore black lines
+
                 if (line.Trim().StartsWith("{"))
                 {
                     betweenSquirlies = true;
@@ -132,7 +122,7 @@ namespace Zen.GuiControls
                 }
                 else
                 {
-                    if (betweenSquirlies && line.Trim().HasValue())
+                    if (betweenSquirlies)
                     {
                         var potentialControl = potentialControls[currentControlName];
                         var key = line.GetTextToLeftOfCharacter(':').Trim();
@@ -150,13 +140,13 @@ namespace Zen.GuiControls
             return potentialControls;
         }
 
-        private static IControl InstantiateControl(string name, string type, Dictionary<string, string> state)
+        private static IControl InstantiateControl(string name, string type, Dictionary<string, string> state, string callingTypeFullName, string callingAssemblyFullName)
         {
             IControl control;
             switch (type)
             {
                 case "Label":
-                    control = InstantiateLabel(name, state);
+                    control = InstantiateLabel(name, state, callingTypeFullName, callingAssemblyFullName);
                     break;
                 case "Button":
                     control = InstantiateButton(name, state);
@@ -174,7 +164,7 @@ namespace Zen.GuiControls
             return control;
         }
 
-        private static Label InstantiateLabel(string name, Dictionary<string, string> state)
+        private static Label InstantiateLabel(string name, Dictionary<string, string> state, string callingTypeFullName, string callingAssemblyFullName)
         {
             try
             {
@@ -187,7 +177,7 @@ namespace Zen.GuiControls
 
                 if (state.ContainsKey("ContentAlignment")) control.ContentAlignment = TranslateAlignment(state["ContentAlignment"], "ContentAlignment");
                 if (state.ContainsKey("Text")) control.Text = state["Text"];
-                if (state.ContainsKey("GetTextFunc")) control.GetTextFunc = TranslateGetTextFunc(state["GetTextFunc"], "GetTextFunc");
+                if (state.ContainsKey("GetTextFunc")) control.GetTextFunc = TranslateGetTextFunc(state["GetTextFunc"], "GetTextFunc", callingTypeFullName, callingAssemblyFullName);
                 if (state.ContainsKey("TextColor")) control.TextColor = TranslateColor(state["TextColor"], "TextColor");
                 if (state.ContainsKey("TextShadowColor")) control.TextShadowColor = TranslateColor(state["TextShadowColor"], "TextShadowColor");
                 if (state.ContainsKey("BackgroundColor")) control.BackgroundColor = TranslateColor(state["BackgroundColor"], "BackgroundColor");
@@ -318,11 +308,11 @@ namespace Zen.GuiControls
             }
         }
 
-        private static Func<object, string> TranslateGetTextFunc(string getTextFuncAsString, string propertyName) // 'Game1.EventHandlers, Game1 - GetTextFunc' or 'Game1.EventHandlers.GetTextFunc'
+        private static Func<object, string> TranslateGetTextFunc(string getTextFuncAsString, string propertyName, string callingTypeFullName, string callingAssemblyFullName) // 'Game1.EventHandlers, Game1 - GetTextFunc' or 'Game1.EventHandlers.GetTextFunc' or 'GetTextFunc'
         {
             try
             {
-                var firstAndLastCharactersRemoved = getTextFuncAsString.RemoveFirstAndLastCharacters();
+                var firstAndLastCharactersRemoved = getTextFuncAsString.RemoveFirstAndLastCharacters(); // remove single quotes
                 var split = firstAndLastCharactersRemoved.Split('-');
 
                 if (split.Length > 1) // if 'Game1.EventHandlers, Game1 - GetTextFunc'
@@ -333,23 +323,31 @@ namespace Zen.GuiControls
 
                     return func;
                 }
-                // else: 'Game1.EventHandlers.GetTextFunc'
+
                 split = split[0].Split('.');
 
+                if (split.Length == 1)
+                {
+                    var methodName = split[0].Trim();
+                    var assemblyQualifiedName = $"{callingTypeFullName}, {callingAssemblyFullName}";
+                    var func = ObjectCreator.CreateFuncDelegate(assemblyQualifiedName, methodName);
+
+                    return func;
+                }
+
+                // else: 'Game1.EventHandlers.GetTextFunc'
                 if (split.Length > 1)
                 {
                     var methodName = split[^1].Trim(); // GetTextFunc
                     var className = split[^2].Trim(); // EventHandlers
                     var nameSpace = firstAndLastCharactersRemoved.Replace($".{methodName}", string.Empty).Replace($".{className}", string.Empty); // Game1
-                    var assemblyQualifiedName = $"{nameSpace}.{className}, {nameSpace}"; // Game1.EventHandlers, Game1
+                    var assemblyQualifiedName = $"{nameSpace}.{className}, {callingAssemblyFullName}"; // Game1.EventHandlers, Game1
                     var func = ObjectCreator.CreateFuncDelegate(assemblyQualifiedName, methodName);
 
                     return func;
                 }
-                else
-                {
-                    return null;
-                }
+
+                throw new Exception($"Failed to convert [{getTextFuncAsString}] for property [{propertyName}] to Func.");
             }
             catch (Exception e)
             {
@@ -359,13 +357,13 @@ namespace Zen.GuiControls
 
         private static List<string> GetPackages(Dictionary<string, string> state)
         {
-            var packagesList = new List<string>();
-            if (!state.ContainsKey("Packages")) return packagesList;
+            if (!state.ContainsKey("Packages")) return new List<string>();
 
+            var packagesList = new List<string>();
             var packagesAsString = state["Packages"];
             try
             {
-                var pack = packagesAsString.RemoveFirstAndLastCharacters();
+                var pack = packagesAsString.RemoveFirstAndLastCharacters(); // remove square braces
                 var packages = pack.Split(';');
                 packagesList.AddRange(packages);
             }
@@ -377,15 +375,25 @@ namespace Zen.GuiControls
             return packagesList;
         }
 
+        private static string GetOnClickEventHandler(Dictionary<string, string> state)
+        {
+            if (!state.ContainsKey("OnClick")) return string.Empty;
+
+            var onClickEventHandlerAsString = state["OnClick"];
+            var onClickEventHandlerAsString2 = $"'Zen.GuiControls.PackagesClasses.ControlClick, Zen.GuiControls - {onClickEventHandlerAsString.RemoveFirstAndLastCharacters()}'"; // remove single quotes
+
+            return onClickEventHandlerAsString2;
+        }
+
         private static List<string> GetContains(Dictionary<string, string> state)
         {
-            var containsList = new List<string>();
-            if (!state.ContainsKey("Contains")) return containsList;
+            if (!state.ContainsKey("Contains")) return new List<string>();
 
+            var containsList = new List<string>();
             var containsAsString = state["Contains"];
             try
             {
-                var cont = containsAsString.RemoveFirstAndLastCharacters();
+                var cont = containsAsString.RemoveFirstAndLastCharacters(); // remove square braces
                 var contains = cont.Split(';');
                 containsList.AddRange(contains);
             }
