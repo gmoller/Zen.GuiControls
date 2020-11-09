@@ -52,7 +52,7 @@ namespace Zen.GuiControls
 
             if (loadChildrenContent)
             {
-                ChildControls.LoadChildControls(content, true);
+                ChildControls.LoadContent(content, true);
             }
         }
 
@@ -99,7 +99,8 @@ namespace Zen.GuiControls
                         ActualDestinationRectangle.Y,
                         ActualDestinationRectangle.Width - 1,
                         ActualDestinationRectangle.Height - 1),
-                    BorderColor.Value, 
+                    BorderColor.Value,
+                    1.0f,
                     LayerDepth);
             }
 

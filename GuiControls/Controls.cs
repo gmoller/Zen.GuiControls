@@ -20,7 +20,7 @@ namespace Zen.GuiControls
 
         public IControl this[int index] => ChildControlsList.Values.ElementAt(index);
         public IControl this[string name] => FindControl(name);
-        private int Count => ChildControlsList.Count;
+        public int Count => ChildControlsList.Count;
 
         internal void Add(string key, IControl control)
         {
@@ -39,7 +39,7 @@ namespace Zen.GuiControls
             return childControl;
         }
 
-        internal void LoadChildControls(ContentManager content, bool loadChildrenContent)
+        public void LoadContent(ContentManager content, bool loadChildrenContent = false)
         {
             foreach (var childControl in ChildControlsList.Values)
             {
@@ -63,7 +63,7 @@ namespace Zen.GuiControls
             }
         }
 
-        internal void UpdateChildControls(InputHandler input, float deltaTime, Viewport? viewport)
+        public void Update(InputHandler input, float deltaTime, Viewport? viewport)
         {
             foreach (var childControl in ChildControlsList.Values)
             {
@@ -71,7 +71,7 @@ namespace Zen.GuiControls
             }
         }
 
-        internal void DrawChildControls(SpriteBatch spriteBatch)
+        public void Draw(SpriteBatch spriteBatch)
         {
             foreach (var childControl in ChildControlsList.Values)
             {
@@ -79,11 +79,19 @@ namespace Zen.GuiControls
             }
         }
 
-        internal void DrawChildControls(Matrix? transform = null)
+        public void Draw(Matrix? transform = null)
         {
             foreach (var childControl in ChildControlsList.Values)
             {
                 childControl.Draw(transform);
+            }
+        }
+
+        public void SetOwner(object owner)
+        {
+            foreach (var childControl in ChildControlsList.Values)
+            {
+                childControl.Owner = owner;
             }
         }
 

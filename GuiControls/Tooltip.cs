@@ -38,14 +38,14 @@ namespace Zen.GuiControls
         public override void LoadContent(ContentManager content, bool loadChildrenContent = false)
         {
             this["frame"].LoadContent(content, loadChildrenContent);
-            this["frame.background"].LoadContent(content, loadChildrenContent);
-            this["frame.lblId"].LoadContent(content, loadChildrenContent);
-            this["frame.lblState"].LoadContent(content, loadChildrenContent);
-            this["frame.lblStackStatus"].LoadContent(content, loadChildrenContent);
-            this["frame.lblIsSelected"].LoadContent(content, loadChildrenContent);
-            this["frame.lblOrdersGiven"].LoadContent(content, loadChildrenContent);
-            this["frame.lblMovementPoints"].LoadContent(content, loadChildrenContent);
-            this["frame.lblCurrent"].LoadContent(content, loadChildrenContent);
+            //this["frame.background"].LoadContent(content, loadChildrenContent);
+            //this["frame.lblId"].LoadContent(content, loadChildrenContent);
+            //this["frame.lblState"].LoadContent(content, loadChildrenContent);
+            //this["frame.lblStackStatus"].LoadContent(content, loadChildrenContent);
+            //this["frame.lblIsSelected"].LoadContent(content, loadChildrenContent);
+            //this["frame.lblOrdersGiven"].LoadContent(content, loadChildrenContent);
+            //this["frame.lblMovementPoints"].LoadContent(content, loadChildrenContent);
+            //this["frame.lblCurrent"].LoadContent(content, loadChildrenContent);
         }
 
         public override void SetPosition(PointI point)

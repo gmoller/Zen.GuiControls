@@ -16,7 +16,7 @@ namespace Zen.GuiControls
         public Image(
             string name,
             string textureName = "") :
-            base(textureName, name)
+            base(name, textureName)
         {
         }
 

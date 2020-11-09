@@ -46,7 +46,7 @@ namespace Zen.GuiControls
         {
             base.LoadContent(content, loadChildrenContent);
 
-            ChildControls.LoadChildControls(content, loadChildrenContent);
+            ChildControls.LoadContent(content, loadChildrenContent);
         }
 
         private void CreateSlots(Vector2 startPosition, Vector2 size, int numberOfSlotsX, int numberOfSlotsY)

@@ -1,5 +1,8 @@
-﻿namespace Zen.GuiControls
+﻿using System;
+
+namespace Zen.GuiControls
 {
+    [Flags]
     public enum Alignment
     {
         None = 0,

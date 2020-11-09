@@ -29,6 +29,18 @@ namespace Zen.GuiControls
         /// Size of control in pixels.
         /// </summary>
         public PointI Size { get; set; }
+
+        private object _owner;
+        public object Owner
+        {
+            get => _owner;
+            set
+            {
+                _owner = value;
+
+                ChildControls.SetOwner(value);
+            }
+        }
         public IControl Parent { get; set; }
         public float LayerDepth { get; set; }
 
@@ -234,7 +246,7 @@ namespace Zen.GuiControls
         {
             if (loadChildrenContent)
             {
-                ChildControls.LoadChildControls(content, true);
+                ChildControls.LoadContent(content, true);
             }
         }
 
@@ -256,7 +268,7 @@ namespace Zen.GuiControls
 
             Status = Packages.Process(this, input, deltaTime);
 
-            ChildControls.UpdateChildControls(input, deltaTime, viewport);
+            ChildControls.Update(input, deltaTime, viewport);
         }
 
         protected virtual void InDraw(SpriteBatch spriteBatch)
@@ -271,14 +283,14 @@ namespace Zen.GuiControls
         {
             InDraw(spriteBatch);
 
-            ChildControls.DrawChildControls(spriteBatch);
+            ChildControls.Draw(spriteBatch);
         }
 
         public void Draw(Matrix? transform = null)
         {
             InDraw(transform);
 
-            ChildControls.DrawChildControls(transform);
+            ChildControls.Draw(transform);
         }
 
         public override string ToString()

@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Reflection;
 using Microsoft.Xna.Framework;
 using Zen.Utilities;
 using Zen.Utilities.ExtensionMethods;
@@ -11,72 +9,29 @@ namespace Zen.GuiControls
 {
     public static class ControlCreator
     {
-        public static Controls CreateFromFile(string path, List<KeyValuePair<string, string>> pairs)
-        {
-            var callingAssembly = Assembly.GetCallingAssembly();
-            var spec = File.ReadAllText(path);
-            var controls = CreateFromSpecification(spec, pairs, 2);
-
-            return controls;
-        }
-
-        public static Controls CreateFromResource(string resourceName, List<KeyValuePair<string, string>> pairs)
-        {
-            var callingAssembly = Assembly.GetCallingAssembly();
-            var spec = ReadResource(resourceName, callingAssembly);
-            var controls = CreateFromSpecification(spec, pairs, 2);
-
-            return controls;
-        }
-
-        private static string ReadResource(string resourceName, Assembly callingAssembly)
-        {
-            using var stream = callingAssembly.GetManifestResourceStream(resourceName);
-            using var reader = new StreamReader(stream ?? throw new InvalidOperationException($"Failed to get stream for [{resourceName}] from Assembly [{callingAssembly.FullName}]"));
-            var result = reader.ReadToEnd();
-
-            return result;
-        }
-
-        public static Controls CreateFromSpecification(string spec, List<KeyValuePair<string, string>> pairs, int level = 1)
+        public static Controls CreateFromSpecification(string spec, List<KeyValuePair<string, string>> pairs = null, int level = 1)
         {
             // determine calling type
-            var callerType = ObjectCreator.GetCallerType(level);
+            var callingType = ObjectCreator.GetCallerType(level);
 
             var allTheLines = spec.SplitToLines().ToArray();
-            var pairsDictionary = pairs.ToDictionary(pair => pair.Key, pair => pair.Value);
+            var pairsDictionary = pairs?.ToDictionary(pair => pair.Key, pair => pair.Value);
 
             var potentialControls = GetPotentialControls(allTheLines, pairsDictionary);
 
-            var staging = new Dictionary<string, (IControl control, List<string> contains)>();
-            foreach (var potentialControl in potentialControls)
-            {
-                var name = potentialControl.Key;
-                var type = potentialControl.Value.controlType;
-                var state = potentialControl.Value.state;
-
-                var control = InstantiateControl(name, type, state, callerType.callingTypeFullName, callerType.callingAssemblyFullName);
-
-                var packagesList = GetPackages(state);
-                var onClickEventHandler = GetOnClickEventHandler(state);
-                if (onClickEventHandler.HasValue())
-                {
-                    packagesList.Add(onClickEventHandler);
-                }
-
-                control.AddPackages(packagesList, callerType.callingTypeFullName, callerType.callingAssemblyFullName);
-
-                var containsList = GetContains(state);
-                staging.Add(name, (control, containsList));
-            }
+            var staging = GetStagingControls(potentialControls, callingType);
 
             // handle contains
             foreach (var control in staging.Values)
             {
                 foreach (var item in control.contains)
                 {
-                    var childControl = (Control)staging[item].control;
-                    control.control.AddControl(childControl);
+                    var stagingItem = staging[item];
+                    var childControl = (Control)stagingItem.control;
+                    var parentContainerAlignment = stagingItem.parentContainerAlignment;
+                    var offset = stagingItem.offset;
+
+                    control.control.AddControl(childControl, parentContainerAlignment.parent, parentContainerAlignment.child, offset);
                 }
             }
 
@@ -138,6 +93,35 @@ namespace Zen.GuiControls
             }
 
             return potentialControls;
+        }
+
+        private static Dictionary<string, (IControl control, List<string> contains, (Alignment parent, Alignment child) parentContainerAlignment, PointI offset)> GetStagingControls(Dictionary<string, (string controlType, Dictionary<string, string> state)> potentialControls, CallingType callingType)
+        {
+            var staging = new Dictionary<string, (IControl control, List<string> contains, (Alignment parent, Alignment child) parentContainerAlignment, PointI offset)>();
+            foreach (var potentialControl in potentialControls)
+            {
+                var name = potentialControl.Key;
+                var type = potentialControl.Value.controlType;
+                var state = potentialControl.Value.state;
+
+                var control = InstantiateControl(name, type, state, callingType.TypeFullName, callingType.AssemblyFullName);
+
+                var packagesList = GetPackages(state);
+                var onClickEventHandler = GetOnClickEventHandler(state);
+                if (onClickEventHandler.HasValue())
+                {
+                    packagesList.Add(onClickEventHandler);
+                }
+
+                control.AddPackages(packagesList, callingType.TypeFullName, callingType.AssemblyFullName);
+
+                var containsList = GetContains(state);
+                var parentContainerAlignment = GetParentContainerAlignment(state);
+                var offset = GetOffset(state);
+                staging.Add(name, (control, containsList, parentContainerAlignment, offset));
+            }
+
+            return staging;
         }
 
         private static IControl InstantiateControl(string name, string type, Dictionary<string, string> state, string callingTypeFullName, string callingAssemblyFullName)
@@ -292,6 +276,21 @@ namespace Zen.GuiControls
             }
         }
 
+        private static ParentContainerAlignment TranslateParentContainerAlignment(string alignmentAsString, string propertyName)
+        {
+            try
+            {
+                var success = Enum.TryParse(alignmentAsString, out ParentContainerAlignment alignment);
+                if (!success) throw new Exception($"ParentContainerAlignment {alignmentAsString} could not be translated.");
+
+                return alignment;
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Failed To convert [{alignmentAsString}] for [{propertyName}] to ParentContainerAlignment.", e);
+            }
+        }
+
         private static PointI TranslatePointI(string pointIAsString, string propertyName)
         {
             try
@@ -403,6 +402,201 @@ namespace Zen.GuiControls
             }
 
             return containsList;
+        }
+
+        private static (Alignment parent, Alignment child) GetParentContainerAlignment(Dictionary<string, string> state)
+        {
+            if (!state.ContainsKey("ParentContainerAlignment")) return (Alignment.TopLeft, Alignment.TopLeft);
+
+            var parentContainerAlignmentAsString = state["ParentContainerAlignment"];
+            var parentContainerAlignment = TranslateParentContainerAlignment(parentContainerAlignmentAsString, "ParentContainerAlignment");
+
+            switch (parentContainerAlignment)
+            {
+                case ParentContainerAlignment.ParentTopLeftAlignsWithChildTopLeft:
+                    return (Alignment.TopLeft, Alignment.TopLeft);
+                case ParentContainerAlignment.ParentTopLeftAlignsWithChildMiddleLeft:
+                    return (Alignment.TopLeft, Alignment.MiddleLeft);
+                case ParentContainerAlignment.ParentTopLeftAlignsWithChildBottomLeft:
+                    return (Alignment.TopLeft, Alignment.BottomLeft);
+                case ParentContainerAlignment.ParentTopLeftAlignsWithChildTopCenter:
+                    return (Alignment.TopLeft, Alignment.TopCenter);
+                case ParentContainerAlignment.ParentTopLeftAlignsWithChildMiddleCenter:
+                    return (Alignment.TopLeft, Alignment.MiddleCenter);
+                case ParentContainerAlignment.ParentTopLeftAlignsWithChildBottomCenter:
+                    return (Alignment.TopLeft, Alignment.BottomCenter);
+                case ParentContainerAlignment.ParentTopLeftAlignsWithChildTopRight:
+                    return (Alignment.TopLeft, Alignment.TopRight);
+                case ParentContainerAlignment.ParentTopLeftAlignsWithChildMiddleRight:
+                    return (Alignment.TopLeft, Alignment.MiddleRight);
+                case ParentContainerAlignment.ParentTopLeftAlignsWithChildBottomRight:
+                    return (Alignment.TopLeft, Alignment.BottomRight);
+
+                case ParentContainerAlignment.ParentMiddleLeftAlignsWithChildTopLeft:
+                    return (Alignment.MiddleLeft, Alignment.TopLeft);
+                case ParentContainerAlignment.ParentMiddleLeftAlignsWithChildMiddleLeft:
+                    return (Alignment.MiddleLeft, Alignment.MiddleLeft);
+                case ParentContainerAlignment.ParentMiddleLeftAlignsWithChildBottomLeft:
+                    return (Alignment.MiddleLeft, Alignment.BottomLeft);
+                case ParentContainerAlignment.ParentMiddleLeftAlignsWithChildTopCenter:
+                    return (Alignment.MiddleLeft, Alignment.TopCenter);
+                case ParentContainerAlignment.ParentMiddleLeftAlignsWithChildMiddleCenter:
+                    return (Alignment.MiddleLeft, Alignment.MiddleCenter);
+                case ParentContainerAlignment.ParentMiddleLeftAlignsWithChildBottomCenter:
+                    return (Alignment.MiddleLeft, Alignment.BottomCenter);
+                case ParentContainerAlignment.ParentMiddleLeftAlignsWithChildTopRight:
+                    return (Alignment.MiddleLeft, Alignment.TopRight);
+                case ParentContainerAlignment.ParentMiddleLeftAlignsWithChildMiddleRight:
+                    return (Alignment.MiddleLeft, Alignment.MiddleRight);
+                case ParentContainerAlignment.ParentMiddleLeftAlignsWithChildBottomRight:
+                    return (Alignment.MiddleLeft, Alignment.BottomRight);
+
+                case ParentContainerAlignment.ParentBottomLeftAlignsWithChildTopLeft:
+                    return (Alignment.BottomLeft, Alignment.TopLeft);
+                case ParentContainerAlignment.ParentBottomLeftAlignsWithChildMiddleLeft:
+                    return (Alignment.BottomLeft, Alignment.MiddleLeft);
+                case ParentContainerAlignment.ParentBottomLeftAlignsWithChildBottomLeft:
+                    return (Alignment.BottomLeft, Alignment.BottomLeft);
+                case ParentContainerAlignment.ParentBottomLeftAlignsWithChildTopCenter:
+                    return (Alignment.BottomLeft, Alignment.TopCenter);
+                case ParentContainerAlignment.ParentBottomLeftAlignsWithChildMiddleCenter:
+                    return (Alignment.BottomLeft, Alignment.MiddleCenter);
+                case ParentContainerAlignment.ParentBottomLeftAlignsWithChildBottomCenter:
+                    return (Alignment.BottomLeft, Alignment.BottomCenter);
+                case ParentContainerAlignment.ParentBottomLeftAlignsWithChildTopRight:
+                    return (Alignment.BottomLeft, Alignment.TopRight);
+                case ParentContainerAlignment.ParentBottomLeftAlignsWithChildMiddleRight:
+                    return (Alignment.BottomLeft, Alignment.MiddleRight);
+                case ParentContainerAlignment.ParentBottomLeftAlignsWithChildBottomRight:
+                    return (Alignment.BottomLeft, Alignment.BottomRight);
+
+                case ParentContainerAlignment.ParentTopCenterAlignsWithChildTopLeft:
+                    return (Alignment.TopCenter, Alignment.TopLeft);
+                case ParentContainerAlignment.ParentTopCenterAlignsWithChildMiddleLeft:
+                    return (Alignment.TopCenter, Alignment.MiddleLeft);
+                case ParentContainerAlignment.ParentTopCenterAlignsWithChildBottomLeft:
+                    return (Alignment.TopCenter, Alignment.BottomLeft);
+                case ParentContainerAlignment.ParentTopCenterAlignsWithChildTopCenter:
+                    return (Alignment.TopCenter, Alignment.TopCenter);
+                case ParentContainerAlignment.ParentTopCenterAlignsWithChildMiddleCenter:
+                    return (Alignment.TopCenter, Alignment.MiddleCenter);
+                case ParentContainerAlignment.ParentTopCenterAlignsWithChildBottomCenter:
+                    return (Alignment.TopCenter, Alignment.BottomCenter);
+                case ParentContainerAlignment.ParentTopCenterAlignsWithChildTopRight:
+                    return (Alignment.TopCenter, Alignment.TopRight);
+                case ParentContainerAlignment.ParentTopCenterAlignsWithChildMiddleRight:
+                    return (Alignment.TopCenter, Alignment.MiddleRight);
+                case ParentContainerAlignment.ParentTopCenterAlignsWithChildBottomRight:
+                    return (Alignment.TopCenter, Alignment.BottomRight);
+
+                case ParentContainerAlignment.ParentMiddleCenterAlignsWithChildTopLeft:
+                    return (Alignment.MiddleCenter, Alignment.TopLeft);
+                case ParentContainerAlignment.ParentMiddleCenterAlignsWithChildMiddleLeft:
+                    return (Alignment.MiddleCenter, Alignment.MiddleLeft);
+                case ParentContainerAlignment.ParentMiddleCenterAlignsWithChildBottomLeft:
+                    return (Alignment.MiddleCenter, Alignment.BottomLeft);
+                case ParentContainerAlignment.ParentMiddleCenterAlignsWithChildTopCenter:
+                    return (Alignment.MiddleCenter, Alignment.TopCenter);
+                case ParentContainerAlignment.ParentMiddleCenterAlignsWithChildMiddleCenter:
+                    return (Alignment.MiddleCenter, Alignment.MiddleCenter);
+                case ParentContainerAlignment.ParentMiddleCenterAlignsWithChildBottomCenter:
+                    return (Alignment.MiddleCenter, Alignment.BottomCenter);
+                case ParentContainerAlignment.ParentMiddleCenterAlignsWithChildTopRight:
+                    return (Alignment.MiddleCenter, Alignment.TopRight);
+                case ParentContainerAlignment.ParentMiddleCenterAlignsWithChildMiddleRight:
+                    return (Alignment.MiddleCenter, Alignment.MiddleRight);
+                case ParentContainerAlignment.ParentMiddleCenterAlignsWithChildBottomRight:
+                    return (Alignment.MiddleCenter, Alignment.BottomRight);
+
+                case ParentContainerAlignment.ParentBottomCenterAlignsWithChildTopLeft:
+                    return (Alignment.BottomCenter, Alignment.TopLeft);
+                case ParentContainerAlignment.ParentBottomCenterAlignsWithChildMiddleLeft:
+                    return (Alignment.BottomCenter, Alignment.MiddleLeft);
+                case ParentContainerAlignment.ParentBottomCenterAlignsWithChildBottomLeft:
+                    return (Alignment.BottomCenter, Alignment.BottomLeft);
+                case ParentContainerAlignment.ParentBottomCenterAlignsWithChildTopCenter:
+                    return (Alignment.BottomCenter, Alignment.TopCenter);
+                case ParentContainerAlignment.ParentBottomCenterAlignsWithChildMiddleCenter:
+                    return (Alignment.BottomCenter, Alignment.MiddleCenter);
+                case ParentContainerAlignment.ParentBottomCenterAlignsWithChildBottomCenter:
+                    return (Alignment.BottomCenter, Alignment.BottomCenter);
+                case ParentContainerAlignment.ParentBottomCenterAlignsWithChildTopRight:
+                    return (Alignment.BottomCenter, Alignment.TopRight);
+                case ParentContainerAlignment.ParentBottomCenterAlignsWithChildMiddleRight:
+                    return (Alignment.BottomCenter, Alignment.MiddleRight);
+                case ParentContainerAlignment.ParentBottomCenterAlignsWithChildBottomRight:
+                    return (Alignment.BottomCenter, Alignment.BottomRight);
+
+                case ParentContainerAlignment.ParentTopRightAlignsWithChildTopLeft:
+                    return (Alignment.TopRight, Alignment.TopLeft);
+                case ParentContainerAlignment.ParentTopRightAlignsWithChildMiddleLeft:
+                    return (Alignment.TopRight, Alignment.MiddleLeft);
+                case ParentContainerAlignment.ParentTopRightAlignsWithChildBottomLeft:
+                    return (Alignment.TopRight, Alignment.BottomLeft);
+                case ParentContainerAlignment.ParentTopRightAlignsWithChildTopCenter:
+                    return (Alignment.TopRight, Alignment.TopCenter);
+                case ParentContainerAlignment.ParentTopRightAlignsWithChildMiddleCenter:
+                    return (Alignment.TopRight, Alignment.MiddleCenter);
+                case ParentContainerAlignment.ParentTopRightAlignsWithChildBottomCenter:
+                    return (Alignment.TopRight, Alignment.BottomCenter);
+                case ParentContainerAlignment.ParentTopRightAlignsWithChildTopRight:
+                    return (Alignment.TopRight, Alignment.TopRight);
+                case ParentContainerAlignment.ParentTopRightAlignsWithChildMiddleRight:
+                    return (Alignment.TopRight, Alignment.MiddleRight);
+                case ParentContainerAlignment.ParentTopRightAlignsWithChildBottomRight:
+                    return (Alignment.TopRight, Alignment.BottomRight);
+
+                case ParentContainerAlignment.ParentMiddleRightAlignsWithChildTopLeft:
+                    return (Alignment.MiddleRight, Alignment.TopLeft);
+                case ParentContainerAlignment.ParentMiddleRightAlignsWithChildMiddleLeft:
+                    return (Alignment.MiddleRight, Alignment.MiddleLeft);
+                case ParentContainerAlignment.ParentMiddleRightAlignsWithChildBottomLeft:
+                    return (Alignment.MiddleRight, Alignment.BottomLeft);
+                case ParentContainerAlignment.ParentMiddleRightAlignsWithChildTopCenter:
+                    return (Alignment.MiddleRight, Alignment.TopCenter);
+                case ParentContainerAlignment.ParentMiddleRightAlignsWithChildMiddleCenter:
+                    return (Alignment.MiddleRight, Alignment.MiddleCenter);
+                case ParentContainerAlignment.ParentMiddleRightAlignsWithChildBottomCenter:
+                    return (Alignment.MiddleRight, Alignment.BottomCenter);
+                case ParentContainerAlignment.ParentMiddleRightAlignsWithChildTopRight:
+                    return (Alignment.MiddleRight, Alignment.TopRight);
+                case ParentContainerAlignment.ParentMiddleRightAlignsWithChildMiddleRight:
+                    return (Alignment.MiddleRight, Alignment.MiddleRight);
+                case ParentContainerAlignment.ParentMiddleRightAlignsWithChildBottomRight:
+                    return (Alignment.MiddleRight, Alignment.BottomRight);
+
+                case ParentContainerAlignment.ParentBottomRightAlignsWithChildTopLeft:
+                    return (Alignment.BottomRight, Alignment.TopLeft);
+                case ParentContainerAlignment.ParentBottomRightAlignsWithChildMiddleLeft:
+                    return (Alignment.BottomRight, Alignment.MiddleLeft);
+                case ParentContainerAlignment.ParentBottomRightAlignsWithChildBottomLeft:
+                    return (Alignment.BottomRight, Alignment.BottomLeft);
+                case ParentContainerAlignment.ParentBottomRightAlignsWithChildTopCenter:
+                    return (Alignment.BottomRight, Alignment.TopCenter);
+                case ParentContainerAlignment.ParentBottomRightAlignsWithChildMiddleCenter:
+                    return (Alignment.BottomRight, Alignment.MiddleCenter);
+                case ParentContainerAlignment.ParentBottomRightAlignsWithChildBottomCenter:
+                    return (Alignment.BottomRight, Alignment.BottomCenter);
+                case ParentContainerAlignment.ParentBottomRightAlignsWithChildTopRight:
+                    return (Alignment.BottomRight, Alignment.TopRight);
+                case ParentContainerAlignment.ParentBottomRightAlignsWithChildMiddleRight:
+                    return (Alignment.BottomRight, Alignment.MiddleRight);
+                case ParentContainerAlignment.ParentBottomRightAlignsWithChildBottomRight:
+                    return (Alignment.BottomRight, Alignment.BottomRight);
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(parentContainerAlignment), parentContainerAlignment, $"ParentContainerAlignment {parentContainerAlignment} is not supported.");
+            }
+        }
+
+        private static PointI GetOffset(Dictionary<string, string> state)
+        {
+            if (!state.ContainsKey("Offset")) return PointI.Zero;
+
+            var offsetAsString = state["Offset"];
+            var offset = TranslatePointI(offsetAsString, "Offset");
+
+            return offset;
         }
     }
 }

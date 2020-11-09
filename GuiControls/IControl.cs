@@ -16,6 +16,11 @@ namespace Zen.GuiControls
         public string Name { get; }
 
         /// <summary>
+        /// Reference to class that owns this control.
+        /// </summary>
+        object Owner { get; set; }
+
+        /// <summary>
         /// Parent control that "owns" this control.
         /// </summary>
         IControl Parent { get; set; }
