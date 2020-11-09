@@ -3,7 +3,7 @@
 A project for user controls for use with MonoGame.
 Current controls: Button, Label, Image and Frame.
 
-Nuget package download: https://www.nuget.org/packages/Zen.GuiControls/0.1.2
+Nuget package download: https://www.nuget.org/packages/Zen.GuiControls/0.1.3
 
 # Examples
 To use:
