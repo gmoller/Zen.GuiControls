@@ -3,7 +3,7 @@
 A project for user controls for use with MonoGame.
 Current controls: Button, Label, Image and Frame.
 
-Nuget package download: https://www.nuget.org/packages/Zen.GuiControls/0.1.3
+Nuget package download: https://www.nuget.org/packages/Zen.GuiControls/0.1.4
 
 # Examples
 To use:
@@ -50,26 +50,48 @@ To use:
 (descriptively)
 
     // in constructor or LoadContent
-    _controls = ControlCreator.CreateFromResource("Game1.PanelControls.txt", new KeyValuePair<string, string>("backgroundColor", "CornflowerBlue"));
+    var spec = @"
+<pre>
+frmTest : Frame
+{
+  TextureName: GUI_Textures_1.frame_texture
+  Position: %position1%
+  Size: 100;100
+  TopPadding: 5
+  BottomPadding: 5
+  LeftPadding: 5
+  RightPadding: 5
+
+  Contains: [lblTest]
+}
+
+lblTest : Label
+{
+  FontName: Arial
+  Size: 100;15
+  ContentAlignment: TopLeft
+  Text: Hello
+  TextColor: Yellow
+
+  ParentContainerAlignment: ParentTopLeftAlignsWithChildTopLeft
+  Offset: 20;20
+}";
+</pre>
+    var pairs = new List<KeyValuePair<string, string>>
+    {
+        new KeyValuePair<string, string>("position1", "1680;0")
+    };
+    _controls = ControlCreator.CreateFromSpecification(spec, pairs);
     
     // in LoadContent
-    _foreach (var control in _controls)
-    {
-        control.LoadContent(content, true);
-    }
+    _controls.LoadContent(content, true);
     
     // in Update
-    foreach (var control in _controls)
-    {
-        control.Update(_input, (float)gameTime.ElapsedGameTime.TotalMilliseconds);
-    }
+    _controls.Update(_input, (float)gameTime.ElapsedGameTime.TotalMilliseconds);
     
     // in Draw
     spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
-    foreach (var control in _controls)
-    {
-        control.Draw(spriteBatch);
-    }
+    _controls.Draw(spriteBatch);
     spriteBatch.End();
     
 <pre>
