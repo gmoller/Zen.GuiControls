@@ -95,7 +95,8 @@ lblTest : Label
     spriteBatch.End();
 
 # Developer
-Written by Greg Moller (greg.moller@gmail.com)
+Written by Greg Moller (greg.moller@gmail.com)  
+If you have any questions drop me a line at the above email.
 
 # License
 Licensed under the MIT License. See the LICENCE file for more information.
