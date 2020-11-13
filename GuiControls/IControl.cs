@@ -13,7 +13,7 @@ namespace Zen.GuiControls
         /// Name of the control.
         /// This will be used as a dictionary key if control is added to a parent.
         /// </summary>
-        public string Name { get; }
+        public string Name { get; set; }
 
         /// <summary>
         /// Reference to class that owns this control.
@@ -130,6 +130,8 @@ namespace Zen.GuiControls
         void AddPackage(IPackage package);
         void AddPackages(List<string> packages, string callingTypeFullName, string callingAssemblyFullName);
         void AddControl(Control childControl, Alignment parentAlignment = Alignment.TopLeft, Alignment childAlignment = Alignment.None, PointI offset = new PointI());
+
+        PointI GetPosition();
         void SetPosition(PointI point);
         void MovePosition(PointI point);
 

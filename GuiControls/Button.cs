@@ -33,6 +33,21 @@ namespace Zen.GuiControls
         {
         }
 
+        public Button Clone()
+        {
+            var clone = new Button(Name, TextureNormal, TextureActive, TextureHover, TextureDisabled);
+            clone.Status = Status;
+            clone.Enabled = Enabled;
+            clone.PositionAlignment = PositionAlignment;
+            clone.SetPosition(GetPosition());
+            clone.Size = Size;
+            clone.Owner = Owner;
+            clone.Parent = Parent;
+            clone.LayerDepth = LayerDepth;
+
+            return clone;
+        }
+
         protected override void InDraw(SpriteBatch spriteBatch)
         {
             if (Texture.HasValue())

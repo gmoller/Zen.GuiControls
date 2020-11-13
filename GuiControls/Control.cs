@@ -14,7 +14,7 @@ namespace Zen.GuiControls
     {
         #region State
         public int Id { get; }
-        public string Name { get; }
+        public string Name { get; set; }
 
         public ControlStatus Status { get; set; }
         public bool Enabled { get; set; }
@@ -215,6 +215,11 @@ namespace Zen.GuiControls
             childControl.SetPosition(topLeft);
             childControl.PositionAlignment = Alignment.TopLeft;
             ChildControls.Add(childControl.Name, childControl);
+        }
+
+        public virtual PointI GetPosition()
+        {
+            return Position.ToPointI();
         }
 
         /// <summary>

@@ -46,6 +46,21 @@ namespace Zen.GuiControls
             _rightPadding = rightPadding;
         }
 
+        public Frame Clone()
+        {
+            var clone = new Frame(Name, TextureName, _topPadding, _bottomPadding, _leftPadding, _rightPadding);
+            clone.Status = Status;
+            clone.Enabled = Enabled;
+            clone.PositionAlignment = PositionAlignment;
+            clone.SetPosition(GetPosition());
+            clone.Size = Size;
+            clone.Owner = Owner;
+            clone.Parent = Parent;
+            clone.LayerDepth = LayerDepth;
+
+            return clone;
+        }
+
         public override void LoadContent(ContentManager content, bool loadChildrenContent = false)
         {
             if (TextureAtlas.HasValue())

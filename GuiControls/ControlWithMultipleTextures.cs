@@ -8,10 +8,10 @@ namespace Zen.GuiControls
     public abstract class ControlWithMultipleTextures : ControlWithSingleTexture
     {
         #region State
-        private string TextureNormal { get; }
-        private string TextureActive { get; }
-        private string TextureHover { get; }
-        private string TextureDisabled { get; }
+        protected string TextureNormal { get; }
+        protected string TextureActive { get; }
+        protected string TextureHover { get; }
+        protected string TextureDisabled { get; }
         #endregion
 
         protected ControlWithMultipleTextures(string name, string textureName, string textureNormal, string textureActive, string textureHover, string textureDisabled)

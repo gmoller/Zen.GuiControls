@@ -97,34 +97,44 @@ namespace Zen.GuiControls
 
         private static Dictionary<string, (IControl control, List<string> contains, (Alignment parent, Alignment child) parentContainerAlignment, PointI offset)> GetStagingControls(Dictionary<string, (string controlType, Dictionary<string, string> state)> potentialControls, CallingType callingType)
         {
-            var staging = new Dictionary<string, (IControl control, List<string> contains, (Alignment parent, Alignment child) parentContainerAlignment, PointI offset)>();
+            var controls = new Dictionary<string, (IControl control, List<string> contains, (Alignment parent, Alignment child) parentContainerAlignment, PointI offset)>();
+            var templates = new Dictionary<string, IControl>();
+
             foreach (var potentialControl in potentialControls)
             {
                 var name = potentialControl.Key;
                 var type = potentialControl.Value.controlType;
                 var state = potentialControl.Value.state;
 
-                var control = InstantiateControl(name, type, state, callingType.TypeFullName, callingType.AssemblyFullName);
-
-                var packagesList = GetPackages(state);
-                var onClickEventHandler = GetOnClickEventHandler(state);
-                if (onClickEventHandler.HasValue())
+                if (type.StartsWith('<') && type.EndsWith('>'))
                 {
-                    packagesList.Add(onClickEventHandler);
+                    var template = InstantiateControl(name, type.RemoveFirstAndLastCharacters(), state, callingType.TypeFullName, callingType.AssemblyFullName, templates);
+                    templates.Add(name, template);
                 }
+                else
+                {
+                    var control = InstantiateControl(name, type, state, callingType.TypeFullName, callingType.AssemblyFullName, templates);
 
-                control.AddPackages(packagesList, callingType.TypeFullName, callingType.AssemblyFullName);
+                    var packagesList = GetPackages(state);
+                    var onClickEventHandler = GetOnClickEventHandler(state);
+                    if (onClickEventHandler.HasValue())
+                    {
+                        packagesList.Add(onClickEventHandler);
+                    }
 
-                var containsList = GetContains(state);
-                var parentContainerAlignment = GetParentContainerAlignment(state);
-                var offset = GetOffset(state);
-                staging.Add(name, (control, containsList, parentContainerAlignment, offset));
+                    control.AddPackages(packagesList, callingType.TypeFullName, callingType.AssemblyFullName);
+
+                    var containsList = GetContains(state);
+                    var parentContainerAlignment = GetParentContainerAlignment(state);
+                    var offset = GetOffset(state);
+                    controls.Add(name, (control, containsList, parentContainerAlignment, offset));
+                }
             }
 
-            return staging;
+            return controls;
         }
 
-        private static IControl InstantiateControl(string name, string type, Dictionary<string, string> state, string callingTypeFullName, string callingAssemblyFullName)
+        private static IControl InstantiateControl(string name, string type, Dictionary<string, string> state, string callingTypeFullName, string callingAssemblyFullName, Dictionary<string, IControl> templates)
         {
             IControl control;
             switch (type)
@@ -142,7 +152,43 @@ namespace Zen.GuiControls
                     control = InstantiateImage(name, state);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(type), type, $"ControlType {type} is not supported.");
+                    if (templates.ContainsKey(type))
+                    {
+                        var template = templates[type];
+                        if (template is Label lbl)
+                        {
+                            control = lbl.Clone();
+                            control.Name = name;
+                            control = UpdateLabel((Label)control, state, callingTypeFullName, callingAssemblyFullName);
+                        }
+                        else if (template is Button btn)
+                        {
+                            control = btn.Clone();
+                            control.Name = name;
+                            control = UpdateButton((Button)control, state);
+                        }
+                        else if (template is Frame frm)
+                        {
+                            control = frm.Clone();
+                            control.Name = name;
+                            control = UpdateFrame((Frame)control, state);
+                        }
+                        else if (template is Image img)
+                        {
+                            control = img.Clone();
+                            control.Name = name;
+                            control = UpdateImage((Image)control, state);
+                        }
+                        else
+                        {
+                            throw new ArgumentOutOfRangeException(nameof(template), template, $"ControlType {template.GetType()} templating is not supported.");
+                        }
+                    }
+                    else
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(type), type, $"ControlType {type} is not supported.");
+                    }
+                    break;
             }
 
             return control;
@@ -153,27 +199,34 @@ namespace Zen.GuiControls
             try
             {
                 var control = new Label(name, state["FontName"]);
-                if (state.ContainsKey("PositionAlignment")) control.PositionAlignment = TranslateAlignment(state["PositionAlignment"], "PositionAlignment");
-                if (state.ContainsKey("Position")) control.SetPosition(TranslatePointI(state["Position"], "Position"));
-                if (state.ContainsKey("Size")) control.Size = TranslatePointI(state["Size"], "Size");
-                if (state.ContainsKey("LayerDepth")) control.LayerDepth = Convert.ToSingle(state["LayerDepth"]);
-                if (state.ContainsKey("Enabled")) control.Enabled = Convert.ToBoolean(state["Enabled"]);
-
-                if (state.ContainsKey("ContentAlignment")) control.ContentAlignment = TranslateAlignment(state["ContentAlignment"], "ContentAlignment");
-                if (state.ContainsKey("Text")) control.Text = state["Text"];
-                if (state.ContainsKey("GetTextFunc")) control.GetTextFunc = TranslateGetTextFunc(state["GetTextFunc"], "GetTextFunc", callingTypeFullName, callingAssemblyFullName);
-                if (state.ContainsKey("TextColor")) control.TextColor = TranslateColor(state["TextColor"], "TextColor");
-                if (state.ContainsKey("TextShadowColor")) control.TextShadowColor = TranslateColor(state["TextShadowColor"], "TextShadowColor");
-                if (state.ContainsKey("BackgroundColor")) control.BackgroundColor = TranslateColor(state["BackgroundColor"], "BackgroundColor");
-                if (state.ContainsKey("BorderColor")) control.BorderColor = TranslateColor(state["BorderColor"], "BorderColor");
-                if (state.ContainsKey("Scale")) control.Scale = Convert.ToSingle(state["Scale"]);
-
+                control = UpdateLabel(control, state, callingTypeFullName, callingAssemblyFullName);
+                
                 return control;
             }
             catch (Exception e)
             {
                 throw new Exception($"Failed to create label [{name}]", e);
             }
+        }
+
+        private static Label UpdateLabel(Label control, Dictionary<string, string> state, string callingTypeFullName, string callingAssemblyFullName)
+        {
+            if (state.ContainsKey("PositionAlignment")) control.PositionAlignment = TranslateAlignment(state["PositionAlignment"], "PositionAlignment");
+            if (state.ContainsKey("Position")) control.SetPosition(TranslatePointI(state["Position"], "Position"));
+            if (state.ContainsKey("Size")) control.Size = TranslatePointI(state["Size"], "Size");
+            if (state.ContainsKey("LayerDepth")) control.LayerDepth = Convert.ToSingle(state["LayerDepth"]);
+            if (state.ContainsKey("Enabled")) control.Enabled = Convert.ToBoolean(state["Enabled"]);
+
+            if (state.ContainsKey("ContentAlignment")) control.ContentAlignment = TranslateAlignment(state["ContentAlignment"], "ContentAlignment");
+            if (state.ContainsKey("Text")) control.Text = state["Text"];
+            if (state.ContainsKey("GetTextFunc")) control.GetTextFunc = TranslateGetTextFunc(state["GetTextFunc"], "GetTextFunc", callingTypeFullName, callingAssemblyFullName);
+            if (state.ContainsKey("TextColor")) control.TextColor = TranslateColor(state["TextColor"], "TextColor");
+            if (state.ContainsKey("TextShadowColor")) control.TextShadowColor = TranslateColor(state["TextShadowColor"], "TextShadowColor");
+            if (state.ContainsKey("BackgroundColor")) control.BackgroundColor = TranslateColor(state["BackgroundColor"], "BackgroundColor");
+            if (state.ContainsKey("BorderColor")) control.BorderColor = TranslateColor(state["BorderColor"], "BorderColor");
+            if (state.ContainsKey("Scale")) control.Scale = Convert.ToSingle(state["Scale"]);
+
+            return control;
         }
 
         private static Button InstantiateButton(string name, Dictionary<string, string> state)
@@ -186,13 +239,7 @@ namespace Zen.GuiControls
                 var textureDisabled = state.ContainsKey("TextureDisabled") ? state["TextureDisabled"] : "";
 
                 var control = new Button(name, textureNormal, textureActive, textureHover, textureDisabled);
-                if (state.ContainsKey("PositionAlignment")) control.PositionAlignment = TranslateAlignment(state["PositionAlignment"], "PositionAlignment");
-                if (state.ContainsKey("Position")) control.SetPosition(TranslatePointI(state["Position"], "Position"));
-                if (state.ContainsKey("Size")) control.Size = TranslatePointI(state["Size"], "Size");
-                if (state.ContainsKey("LayerDepth")) control.LayerDepth = Convert.ToSingle(state["LayerDepth"]);
-                if (state.ContainsKey("Enabled")) control.Enabled = Convert.ToBoolean(state["Enabled"]);
-
-                if (state.ContainsKey("Color")) control.Color = TranslateColor(state["Color"], "Color");
+                control = UpdateButton(control, state);
 
                 return control;
             }
@@ -200,6 +247,19 @@ namespace Zen.GuiControls
             {
                 throw new Exception($"Failed to create button [{name}]", e);
             }
+        }
+
+        private static Button UpdateButton(Button control, Dictionary<string, string> state)
+        {
+            if (state.ContainsKey("PositionAlignment")) control.PositionAlignment = TranslateAlignment(state["PositionAlignment"], "PositionAlignment");
+            if (state.ContainsKey("Position")) control.SetPosition(TranslatePointI(state["Position"], "Position"));
+            if (state.ContainsKey("Size")) control.Size = TranslatePointI(state["Size"], "Size");
+            if (state.ContainsKey("LayerDepth")) control.LayerDepth = Convert.ToSingle(state["LayerDepth"]);
+            if (state.ContainsKey("Enabled")) control.Enabled = Convert.ToBoolean(state["Enabled"]);
+
+            if (state.ContainsKey("Color")) control.Color = TranslateColor(state["Color"], "Color");
+
+            return control;
         }
 
         private static Frame InstantiateFrame(string name, Dictionary<string, string> state)
@@ -213,11 +273,7 @@ namespace Zen.GuiControls
                 var rightPadding = state.ContainsKey("RightPadding") ? Convert.ToInt32(state["RightPadding"]) : 0;
 
                 var control = new Frame(name, textureName, topPadding, bottomPadding, leftPadding, rightPadding);
-                if (state.ContainsKey("PositionAlignment")) control.PositionAlignment = TranslateAlignment(state["PositionAlignment"], "PositionAlignment");
-                if (state.ContainsKey("Position")) control.SetPosition(TranslatePointI(state["Position"], "Position"));
-                if (state.ContainsKey("Size")) control.Size = TranslatePointI(state["Size"], "Size");
-                if (state.ContainsKey("LayerDepth")) control.LayerDepth = Convert.ToSingle(state["LayerDepth"]);
-                if (state.ContainsKey("Enabled")) control.Enabled = Convert.ToBoolean(state["Enabled"]);
+                control = UpdateFrame(control, state);
 
                 return control;
             }
@@ -227,6 +283,17 @@ namespace Zen.GuiControls
             }
         }
 
+        private static Frame UpdateFrame(Frame control, Dictionary<string, string> state)
+        {
+            if (state.ContainsKey("PositionAlignment")) control.PositionAlignment = TranslateAlignment(state["PositionAlignment"], "PositionAlignment");
+            if (state.ContainsKey("Position")) control.SetPosition(TranslatePointI(state["Position"], "Position"));
+            if (state.ContainsKey("Size")) control.Size = TranslatePointI(state["Size"], "Size");
+            if (state.ContainsKey("LayerDepth")) control.LayerDepth = Convert.ToSingle(state["LayerDepth"]);
+            if (state.ContainsKey("Enabled")) control.Enabled = Convert.ToBoolean(state["Enabled"]);
+
+            return control;
+        }
+
         private static IControl InstantiateImage(string name, Dictionary<string, string> state)
         {
             try
@@ -234,9 +301,7 @@ namespace Zen.GuiControls
                 var textureName = state.ContainsKey("TextureName") ? state["TextureName"] : string.Empty;
 
                 var control = new Image(name, textureName);
-                if (state.ContainsKey("PositionAlignment")) control.PositionAlignment = TranslateAlignment(state["PositionAlignment"], "PositionAlignment");
-                if (state.ContainsKey("Position")) control.SetPosition(TranslatePointI(state["Position"], "Position"));
-                if (state.ContainsKey("Size")) control.Size = TranslatePointI(state["Size"], "Size");
+                control = UpdateImage(control, state);
 
                 return control;
             }
@@ -244,6 +309,15 @@ namespace Zen.GuiControls
             {
                 throw new Exception($"Failed to create image [{name}]", e);
             }
+        }
+
+        private static Image UpdateImage(Image control, Dictionary<string, string> state)
+        {
+            if (state.ContainsKey("PositionAlignment")) control.PositionAlignment = TranslateAlignment(state["PositionAlignment"], "PositionAlignment");
+            if (state.ContainsKey("Position")) control.SetPosition(TranslatePointI(state["Position"], "Position"));
+            if (state.ContainsKey("Size")) control.Size = TranslatePointI(state["Size"], "Size");
+
+            return control;
         }
 
         private static Color TranslateColor(string colorAsString, string propertyName)

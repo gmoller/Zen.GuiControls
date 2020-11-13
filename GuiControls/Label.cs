@@ -46,6 +46,31 @@ namespace Zen.GuiControls
             FontName = fontName;
         }
 
+        public Label Clone()
+        {
+            var clone = new Label(Name, FontName);
+            clone.ContentAlignment = ContentAlignment;
+            clone.Text = Text;
+            clone.GetTextFunc = GetTextFunc;
+            clone.TextColor = TextColor;
+            clone.TextShadowColor = TextShadowColor;
+            clone.BackgroundColor = BackgroundColor;
+            clone.BorderColor = BorderColor;
+            clone.Scale = Scale;
+            clone.Font = Font;
+
+            clone.Status = Status;
+            clone.Enabled = Enabled;
+            clone.PositionAlignment = PositionAlignment;
+            clone.SetPosition(GetPosition());
+            clone.Size = Size;
+            clone.Owner = Owner;
+            clone.Parent = Parent;
+            clone.LayerDepth = LayerDepth;
+
+            return clone;
+        }
+
         public override void LoadContent(ContentManager content, bool loadChildrenContent = false)
         {
             Font = AssetsManager.Instance.GetSpriteFont(FontName);

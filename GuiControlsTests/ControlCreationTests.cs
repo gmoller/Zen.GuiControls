@@ -107,5 +107,97 @@ lblTest : Label
             Assert.AreEqual(new PointI(1700, 35), ctrl3.BottomLeft);
             Assert.AreEqual(new PointI(1800, 35), ctrl3.BottomRight);
         }
+
+        [Test]
+        public void Control_templates_can_be_used()
+        {
+            var spec = @"
+lblTemplate1 : <Label>
+{
+  FontName: Arial
+  Position: 50;50
+  Size: 100;15
+  ContentAlignment: TopLeft
+  Text: Hello
+  TextColor: Yellow
+}
+
+lblTemplate2 : <lblTemplate1>
+{
+  BorderColor: Red
+}
+
+lblTest1 : lblTemplate1
+{
+}
+
+lblTest2 : lblTemplate2
+{
+}
+
+lblTest3 : lblTemplate1
+{
+  Text: Goodbye
+  BorderColor: Red
+}";
+
+            var controls = ControlCreator.CreateFromSpecification(spec);
+            controls.SetOwner(this);
+
+            Assert.AreEqual(3, controls.Count);
+            var ctrl1 = controls[0];
+            var lblTest1 = controls["lblTest1"];
+            var lblTest2 = controls["lblTest2"];
+            var lblTest3 = controls["lblTest3"];
+            Assert.IsTrue(ctrl1 == lblTest1);
+            Assert.IsTrue(lblTest1 is Label);
+            Assert.IsTrue(lblTest2 is Label);
+            Assert.IsTrue(lblTest3 is Label);
+            Assert.IsTrue(lblTest1.Owner is ControlCreationTests);
+            Assert.IsTrue(lblTest2.Owner is ControlCreationTests);
+            Assert.IsTrue(lblTest3.Owner is ControlCreationTests);
+
+            var label1 = (Label)lblTest1;
+            Assert.AreEqual("lblTest1", label1.Name);
+            Assert.AreEqual(null, label1.Parent);
+            Assert.AreEqual(new Rectangle(50, 50, 100, 15), label1.Area);
+            Assert.AreEqual(new PointI(50, 50), label1.TopLeft);
+            Assert.AreEqual(new PointI(150, 50), label1.TopRight);
+            Assert.AreEqual(new PointI(50, 65), label1.BottomLeft);
+            Assert.AreEqual(new PointI(150, 65), label1.BottomRight);
+            //Assert.AreEqual("Arial", label1.FontName);
+            Assert.AreEqual(Alignment.TopLeft, label1.ContentAlignment);
+            Assert.AreEqual("Hello", label1.Text);
+            Assert.AreEqual(Color.Yellow, label1.TextColor);
+            Assert.AreEqual(null, label1.BorderColor);
+
+            var label2 = (Label)lblTest2;
+            Assert.AreEqual("lblTest2", label2.Name);
+            Assert.AreEqual(null, label2.Parent);
+            Assert.AreEqual(new Rectangle(50, 50, 100, 15), label2.Area);
+            Assert.AreEqual(new PointI(50, 50), label2.TopLeft);
+            Assert.AreEqual(new PointI(150, 50), label2.TopRight);
+            Assert.AreEqual(new PointI(50, 65), label2.BottomLeft);
+            Assert.AreEqual(new PointI(150, 65), label2.BottomRight);
+            //Assert.AreEqual("Arial", label2.FontName);
+            Assert.AreEqual(Alignment.TopLeft, label2.ContentAlignment);
+            Assert.AreEqual("Hello", label2.Text);
+            Assert.AreEqual(Color.Yellow, label2.TextColor);
+            Assert.AreEqual(Color.Red, label2.BorderColor);
+
+            var label3 = (Label)lblTest3;
+            Assert.AreEqual("lblTest3", label3.Name);
+            Assert.AreEqual(null, label3.Parent);
+            Assert.AreEqual(new Rectangle(50, 50, 100, 15), label3.Area);
+            Assert.AreEqual(new PointI(50, 50), label3.TopLeft);
+            Assert.AreEqual(new PointI(150, 50), label3.TopRight);
+            Assert.AreEqual(new PointI(50, 65), label3.BottomLeft);
+            Assert.AreEqual(new PointI(150, 65), label3.BottomRight);
+            //Assert.AreEqual("Arial", label3.FontName);
+            Assert.AreEqual(Alignment.TopLeft, label3.ContentAlignment);
+            Assert.AreEqual("Goodbye", label3.Text);
+            Assert.AreEqual(Color.Yellow, label3.TextColor);
+            Assert.AreEqual(Color.Red, label3.BorderColor);
+        }
     }
 }
