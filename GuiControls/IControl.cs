@@ -36,6 +36,11 @@ namespace Zen.GuiControls
         bool Enabled { get; set; }
 
         /// <summary>
+        /// 
+        /// </summary>
+        bool Visible { get; set; }
+
+        /// <summary>
         /// Enumerable list of all child controls "owned" by this control.
         /// </summary>
         Controls ChildControls { get; }

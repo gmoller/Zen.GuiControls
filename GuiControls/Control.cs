@@ -18,6 +18,7 @@ namespace Zen.GuiControls
 
         public ControlStatus Status { get; set; }
         public bool Enabled { get; set; }
+        public bool Visible { get; set; }
         public Controls ChildControls { get; }
 
         /// <summary>
@@ -62,6 +63,7 @@ namespace Zen.GuiControls
 
             Status = ControlStatus.None;
             Enabled = true;
+            Visible = true;
 
             ChildControls = new Controls();
             Packages = new Packages();
@@ -286,7 +288,10 @@ namespace Zen.GuiControls
 
         public virtual void Draw(SpriteBatch spriteBatch)
         {
-            InDraw(spriteBatch);
+            if (Visible)
+            {
+                InDraw(spriteBatch);
+            }
 
             ChildControls.Draw(spriteBatch);
         }
