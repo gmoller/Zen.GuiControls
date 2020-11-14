@@ -7,20 +7,46 @@ namespace Zen.GuiControls
 {
     public abstract class ControlWithMultipleTextures : ControlWithSingleTexture
     {
+        private string _textureNormal;
+        private string _textureActive;
+        private string _textureHover;
+        private string _textureDisabled;
+
         #region State
-        protected string TextureNormal { get; }
-        protected string TextureActive { get; }
-        protected string TextureHover { get; }
-        protected string TextureDisabled { get; }
+
+        public string TextureNormal
+        {
+            get => _textureNormal;
+            set => _textureNormal = value.HasValue() ? value.KeepOnlyAfterCharacter('.') : TextureName;
+        }
+
+        public string TextureActive
+        {
+            get => _textureActive;
+            set => _textureActive = value.HasValue() ? value.KeepOnlyAfterCharacter('.') : TextureName;
+        }
+
+        public string TextureHover
+        {
+            get => _textureHover;
+            set => _textureHover = value.HasValue() ? value.KeepOnlyAfterCharacter('.') : TextureName;
+        }
+
+        public string TextureDisabled
+        {
+            get => _textureDisabled;
+            set => _textureDisabled = value.HasValue() ? value.KeepOnlyAfterCharacter('.') : TextureName;
+        }
+
         #endregion
 
         protected ControlWithMultipleTextures(string name, string textureName, string textureNormal, string textureActive, string textureHover, string textureDisabled)
             : base(name, textureName)
         {
-            TextureNormal = textureNormal.HasValue() ? textureNormal.KeepOnlyAfterCharacter('.') : TextureName;
-            TextureActive = textureActive.HasValue() ? textureActive.KeepOnlyAfterCharacter('.') : TextureName;
-            TextureHover = textureHover.HasValue() ? textureHover.KeepOnlyAfterCharacter('.') : TextureName;
-            TextureDisabled = textureDisabled.HasValue() ? textureDisabled.KeepOnlyAfterCharacter('.') : TextureName;
+            TextureNormal = textureNormal;
+            TextureActive = textureActive;
+            TextureHover = textureHover;
+            TextureDisabled = textureDisabled;
         }
 
         public override void Update(InputHandler input, float deltaTime, Viewport? viewport = null)

@@ -211,6 +211,8 @@ namespace Zen.GuiControls
 
         private static Label UpdateLabel(Label control, Dictionary<string, string> state, string callingTypeFullName, string callingAssemblyFullName)
         {
+            if (state.ContainsKey("FontName")) control.FontName = state["FontName"];
+
             if (state.ContainsKey("PositionAlignment")) control.PositionAlignment = TranslateAlignment(state["PositionAlignment"], "PositionAlignment");
             if (state.ContainsKey("Position")) control.SetPosition(TranslatePointI(state["Position"], "Position"));
             if (state.ContainsKey("Size")) control.Size = TranslatePointI(state["Size"], "Size");
@@ -251,6 +253,11 @@ namespace Zen.GuiControls
 
         private static Button UpdateButton(Button control, Dictionary<string, string> state)
         {
+            if (state.ContainsKey("TextureNormal")) control.TextureNormal = state["TextureNormal"];
+            if (state.ContainsKey("TextureActive")) control.TextureActive = state["TextureActive"];
+            if (state.ContainsKey("TextureHover")) control.TextureHover = state["TextureHover"];
+            if (state.ContainsKey("TextureDisabled")) control.TextureDisabled = state["TextureDisabled"];
+
             if (state.ContainsKey("PositionAlignment")) control.PositionAlignment = TranslateAlignment(state["PositionAlignment"], "PositionAlignment");
             if (state.ContainsKey("Position")) control.SetPosition(TranslatePointI(state["Position"], "Position"));
             if (state.ContainsKey("Size")) control.Size = TranslatePointI(state["Size"], "Size");
@@ -285,6 +292,12 @@ namespace Zen.GuiControls
 
         private static Frame UpdateFrame(Frame control, Dictionary<string, string> state)
         {
+            if (state.ContainsKey("TextureName")) control.TextureName = state["TextureName"];
+            if (state.ContainsKey("TopPadding")) control.TopPadding = Convert.ToInt32(state["TopPadding"]);
+            if (state.ContainsKey("BottomPadding")) control.BottomPadding = Convert.ToInt32(state["BottomPadding"]);
+            if (state.ContainsKey("LeftPadding")) control.LeftPadding = Convert.ToInt32(state["LeftPadding"]);
+            if (state.ContainsKey("RightPadding")) control.RightPadding = Convert.ToInt32(state["RightPadding"]);
+
             if (state.ContainsKey("PositionAlignment")) control.PositionAlignment = TranslateAlignment(state["PositionAlignment"], "PositionAlignment");
             if (state.ContainsKey("Position")) control.SetPosition(TranslatePointI(state["Position"], "Position"));
             if (state.ContainsKey("Size")) control.Size = TranslatePointI(state["Size"], "Size");
@@ -313,6 +326,8 @@ namespace Zen.GuiControls
 
         private static Image UpdateImage(Image control, Dictionary<string, string> state)
         {
+            if (state.ContainsKey("TextureName")) control.TextureName = state["TextureName"];
+
             if (state.ContainsKey("PositionAlignment")) control.PositionAlignment = TranslateAlignment(state["PositionAlignment"], "PositionAlignment");
             if (state.ContainsKey("Position")) control.SetPosition(TranslatePointI(state["Position"], "Position"));
             if (state.ContainsKey("Size")) control.Size = TranslatePointI(state["Size"], "Size");

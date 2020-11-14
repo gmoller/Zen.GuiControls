@@ -13,10 +13,10 @@ namespace Zen.GuiControls
     public class Frame : ControlWithSingleTexture
     {
         #region State
-        private readonly int _topPadding;
-        private readonly int _bottomPadding;
-        private readonly int _leftPadding;
-        private readonly int _rightPadding;
+        public int TopPadding { get; set; }
+        public int BottomPadding { get; set; }
+        public int LeftPadding { get; set; }
+        public int RightPadding { get; set; }
 
         private Rectangle[] _sourcePatches;
         private Rectangle[] _destinationPatches;
@@ -40,15 +40,15 @@ namespace Zen.GuiControls
             int rightPadding = 0) :
             base(name, textureName)
         {
-            _topPadding = topPadding;
-            _bottomPadding = bottomPadding;
-            _leftPadding = leftPadding;
-            _rightPadding = rightPadding;
+            TopPadding = topPadding;
+            BottomPadding = bottomPadding;
+            LeftPadding = leftPadding;
+            RightPadding = rightPadding;
         }
 
         public Frame Clone()
         {
-            var clone = new Frame(Name, TextureName, _topPadding, _bottomPadding, _leftPadding, _rightPadding);
+            var clone = new Frame(Name, TextureName, TopPadding, BottomPadding, LeftPadding, RightPadding);
             clone.Status = Status;
             clone.Enabled = Enabled;
             clone.PositionAlignment = PositionAlignment;
@@ -70,16 +70,16 @@ namespace Zen.GuiControls
 
                 var frame = atlas.Frames[TextureName];
 
-                _sourcePatches = CreatePatches(frame.ToRectangle(), _topPadding, _bottomPadding, _leftPadding, _rightPadding);
+                _sourcePatches = CreatePatches(frame.ToRectangle(), TopPadding, BottomPadding, LeftPadding, RightPadding);
             }
             else if (TextureName.HasValue())
             {
                 Texture = AssetsManager.Instance.GetTexture(TextureName);
                 var frame = Texture.Bounds;
-                _sourcePatches = CreatePatches(frame, _topPadding, _bottomPadding, _leftPadding, _rightPadding);
+                _sourcePatches = CreatePatches(frame, TopPadding, BottomPadding, LeftPadding, RightPadding);
             }
 
-            _destinationPatches = CreatePatches(new Rectangle(TopLeft.X, TopLeft.Y, Size.X, Size.Y), _topPadding, _bottomPadding, _leftPadding, _rightPadding);
+            _destinationPatches = CreatePatches(new Rectangle(TopLeft.X, TopLeft.Y, Size.X, Size.Y), TopPadding, BottomPadding, LeftPadding, RightPadding);
 
             base.LoadContent(content, loadChildrenContent);
         }
@@ -102,7 +102,7 @@ namespace Zen.GuiControls
 
             if (_destinationPatches != null)
             {
-                _destinationPatches = CreatePatches(new Rectangle(TopLeft.X, TopLeft.Y, Size.X, Size.Y), _topPadding, _bottomPadding, _leftPadding, _rightPadding);
+                _destinationPatches = CreatePatches(new Rectangle(TopLeft.X, TopLeft.Y, Size.X, Size.Y), TopPadding, BottomPadding, LeftPadding, RightPadding);
             }
         }
 

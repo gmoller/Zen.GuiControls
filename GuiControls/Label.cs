@@ -22,7 +22,7 @@ namespace Zen.GuiControls
         public Color? BorderColor { get; set; }
         public float Scale { get; set; }
 
-        private string FontName { get; }
+        public string FontName { get; set; }
         private SpriteFont Font { get; set; }
         #endregion
 

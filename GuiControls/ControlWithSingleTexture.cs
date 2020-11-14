@@ -9,12 +9,24 @@ namespace Zen.GuiControls
 {
     public abstract class ControlWithSingleTexture : Control
     {
+        private string _textureName;
+
         #region State
-        protected string TextureAtlas { get; }
-        protected string TextureName { get; }
+        protected string TextureAtlas { get; private set; }
+
+        public string TextureName
+        {
+            get => _textureName;
+            set
+            {
+                TextureAtlas = ControlHelper.GetTextureAtlas(value);
+                _textureName = ControlHelper.GetTextureName(value);
+            }
+        }
+
         public Color Color { get; set; }
 
-        protected AtlasSpec2 Atlas { get; set; }
+        protected AtlasSpec2 Atlas { get; private set; }
         protected Texture2D Texture { get; set; }
         protected Rectangle SourceRectangle { get; private set; }
         #endregion
@@ -24,8 +36,7 @@ namespace Zen.GuiControls
         {
             if (textureName.HasValue())
             {
-                TextureAtlas = ControlHelper.GetTextureAtlas(textureName);
-                TextureName = ControlHelper.GetTextureName(textureName);
+                TextureName = textureName;
             }
 
             Color = Color.White;

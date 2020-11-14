@@ -112,9 +112,13 @@ lblTest : Label
         public void Control_templates_can_be_used()
         {
             var spec = @"
-lblTemplate1 : <Label>
+lbl : <Label>
 {
   FontName: Arial
+}
+
+lblTemplate1 : <lbl>
+{
   Position: 50;50
   Size: 100;15
   ContentAlignment: TopLeft
