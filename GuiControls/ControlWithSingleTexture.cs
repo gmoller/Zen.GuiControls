@@ -9,20 +9,9 @@ namespace Zen.GuiControls
 {
     public abstract class ControlWithSingleTexture : Control
     {
-        private string _textureName;
-
         #region State
-        protected string TextureAtlas { get; private set; }
-
-        public string TextureName
-        {
-            get => _textureName;
-            set
-            {
-                TextureAtlas = ControlHelper.GetTextureAtlas(value);
-                _textureName = ControlHelper.GetTextureName(value);
-            }
-        }
+        private string _textureName;
+        public string TextureAtlas { get; private set; }
 
         public Color Color { get; set; }
 
@@ -40,6 +29,16 @@ namespace Zen.GuiControls
             }
 
             Color = Color.White;
+        }
+
+        public string TextureName
+        {
+            get => _textureName;
+            set
+            {
+                TextureAtlas = ControlHelper.GetTextureAtlas(value);
+                _textureName = ControlHelper.GetTextureName(value);
+            }
         }
 
         public override void LoadContent(ContentManager content, bool loadChildrenContent = false)

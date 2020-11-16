@@ -28,13 +28,13 @@ namespace Zen.GuiControls
             }
         }
 
-        internal ControlStatus Process(IControl control, InputHandler input, float deltaTime)
+        internal ControlStatus Update(IControl control, InputHandler input, float deltaTime)
         {
             var controlStatus = control.Status;
 
             foreach (var package in PackagesList)
             {
-                controlStatus = package.Process(control, input, deltaTime);
+                controlStatus = package.Update(control, input, deltaTime);
             }
 
             return controlStatus;

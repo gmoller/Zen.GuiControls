@@ -26,7 +26,7 @@ namespace Zen.GuiControls.PackagesClasses
             _currentCooldownTimeInMilliseconds = 0.0f;
         }
 
-        public ControlStatus Process(IControl control, InputHandler input, float deltaTime)
+        public ControlStatus Update(IControl control, InputHandler input, float deltaTime)
         {
             ControlStatus returnStatus = control.Status;
 

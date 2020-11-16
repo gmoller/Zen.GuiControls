@@ -49,6 +49,7 @@ namespace Zen.GuiControls
         public Label Clone()
         {
             var clone = new Label(Name, FontName);
+
             clone.ContentAlignment = ContentAlignment;
             clone.Text = Text;
             clone.GetTextFunc = GetTextFunc;

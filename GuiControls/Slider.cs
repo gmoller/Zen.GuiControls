@@ -6,23 +6,31 @@ using Zen.MonoGameUtilities.ExtensionMethods;
 namespace Zen.GuiControls
 {
     [DebuggerDisplay("{" + nameof(DebuggerDisplay) + ",nq}")]
-    public class Image : ControlWithSingleTexture
+    public class Slider : ControlWithSingleTexture
     {
+        public int MinimumValue { get; set; }
+        public int MaximumValue { get; set; }
+        public int CurrentValue { get; set; }
+
         /// <summary>
-        /// An amazing little image.
+        /// An wonderful little slider.
         /// </summary>
         /// <param name="name">Name of control.</param>
         /// <param name="textureName">Texture to use for control.</param>
-        public Image(
+        public Slider(
             string name,
             string textureName = "") :
             base(name, textureName)
         {
         }
 
-        public Image Clone()
+        public Slider Clone()
         {
-            var clone = new Image(Name, TextureName);
+            var clone = new Slider(Name, TextureName);
+
+            clone.MinimumValue = MinimumValue;
+            clone.MaximumValue = MaximumValue;
+            clone.CurrentValue = CurrentValue;
 
             clone.Status = Status;
             clone.Enabled = Enabled;

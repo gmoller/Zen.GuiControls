@@ -273,7 +273,7 @@ namespace Zen.GuiControls
                 _ => Status
             };
 
-            Status = Packages.Process(this, input, deltaTime);
+            Status = Packages.Update(this, input, deltaTime);
 
             ChildControls.Update(input, deltaTime, viewport);
         }

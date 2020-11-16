@@ -19,9 +19,9 @@ namespace Zen.GuiControlsTests
             var spec = @"
 frmTest : Frame
 {
-  TextureName: GUI_Textures_1.frame_texture
-  Position: 1680;0
-  Size: 100;100
+  TextureName: 'GUI_Textures_1.frame_texture'
+  Position: [1680;0]
+  Size: [100;100]
   TopPadding: 5
   BottomPadding: 5
   LeftPadding: 5
@@ -43,6 +43,10 @@ frmTest : Frame
             Assert.AreEqual(new PointI(1780, 0), ctrl1.TopRight);
             Assert.AreEqual(new PointI(1680, 100), ctrl1.BottomLeft);
             Assert.AreEqual(new PointI(1780, 100), ctrl1.BottomRight);
+
+            var frame1 = (Frame)ctrl1;
+            Assert.AreEqual("GUI_Textures_1", frame1.TextureAtlas);
+            Assert.AreEqual("frame_texture", frame1.TextureName);
         }
 
         [Test]
@@ -51,9 +55,9 @@ frmTest : Frame
             var spec = @"
 frmTest : Frame
 {
-  TextureName: GUI_Textures_1.frame_texture
+  TextureName: 'GUI_Textures_1.frame_texture'
   Position: %position1%
-  Size: 100;100
+  Size: [100;100]
   TopPadding: 5
   BottomPadding: 5
   LeftPadding: 5
@@ -64,18 +68,18 @@ frmTest : Frame
 
 lblTest : Label
 {
-  FontName: Arial
-  Size: 100;15
+  FontName: 'Arial'
+  Size: [100;15]
   ContentAlignment: TopLeft
-  Text: Hello
+  Text: 'Hello'
   TextColor: Yellow
 
   ParentContainerAlignment: ParentTopLeftAlignsWithChildTopLeft
-  Offset: 20;20
+  Offset: [20;20]
 }";
             var pairs = new List<KeyValuePair<string, string>>
             {
-                new KeyValuePair<string, string>("position1", "1680;0")
+                new KeyValuePair<string, string>("position1", "[1680;0]")
             };
 
             var controls = ControlCreator.CreateFromSpecification(spec, pairs);
@@ -114,15 +118,15 @@ lblTest : Label
             var spec = @"
 lbl : <Label>
 {
-  FontName: Arial
+  FontName: 'Arial'
 }
 
 lblTemplate1 : <lbl>
 {
-  Position: 50;50
-  Size: 100;15
+  Position: [50;50]
+  Size: [100;15]
   ContentAlignment: TopLeft
-  Text: Hello
+  Text: 'Hello'
   TextColor: Yellow
 }
 
@@ -141,7 +145,7 @@ lblTest2 : lblTemplate2
 
 lblTest3 : lblTemplate1
 {
-  Text: Goodbye
+  Text: 'Goodbye'
   BorderColor: Red
 }";
 

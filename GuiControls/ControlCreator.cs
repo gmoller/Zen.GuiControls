@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.Xna.Framework;
 using Zen.Utilities;
 using Zen.Utilities.ExtensionMethods;
 
@@ -20,7 +19,7 @@ namespace Zen.GuiControls
             var potentialControls = GetPotentialControls(allTheLines, pairsDictionary);
 
             var staging = GetStagingControls(potentialControls, callingType);
-
+                                                                                                                                                                                                                                                                                                                                                                                        
             // handle contains
             foreach (var control in staging.Values)
             {
@@ -48,9 +47,9 @@ namespace Zen.GuiControls
             return list;
         }
 
-        private static Dictionary<string, (string controlType, Dictionary<string, string> state)> GetPotentialControls(string[] allTheLines, Dictionary<string, string> pairs)
+        private static Dictionary<string, (string controlType, StateDictionary state)> GetPotentialControls(string[] allTheLines, Dictionary<string, string> pairs)
         {
-            var potentialControls = new Dictionary<string, (string controlType, Dictionary<string, string> state)>();
+            var potentialControls = new Dictionary<string, (string controlType, StateDictionary state)>();
 
             var currentControlName = string.Empty;
             var betweenSquirlies = false;
@@ -67,7 +66,7 @@ namespace Zen.GuiControls
                     var controlNameAndType = allTheLines[i - 1];
                     currentControlName = controlNameAndType.Split(':')[0].Trim();
                     var controlType = controlNameAndType.Split(':')[1].Trim();
-                    (string controlType, Dictionary<string, string> state) state = (controlType, new Dictionary<string, string>());
+                    (string controlType, StateDictionary state) state = (controlType, new StateDictionary());
                     potentialControls.Add(currentControlName, state);
                 }
                 else if (line.Trim().StartsWith("}"))
@@ -95,7 +94,7 @@ namespace Zen.GuiControls
             return potentialControls;
         }
 
-        private static Dictionary<string, (IControl control, List<string> contains, (Alignment parent, Alignment child) parentContainerAlignment, PointI offset)> GetStagingControls(Dictionary<string, (string controlType, Dictionary<string, string> state)> potentialControls, CallingType callingType)
+        private static Dictionary<string, (IControl control, List<string> contains, (Alignment parent, Alignment child) parentContainerAlignment, PointI offset)> GetStagingControls(Dictionary<string, (string controlType, StateDictionary state)> potentialControls, CallingType callingType)
         {
             var controls = new Dictionary<string, (IControl control, List<string> contains, (Alignment parent, Alignment child) parentContainerAlignment, PointI offset)>();
             var templates = new Dictionary<string, IControl>();
@@ -106,7 +105,8 @@ namespace Zen.GuiControls
                 var type = potentialControl.Value.controlType;
                 var state = potentialControl.Value.state;
 
-                if (type.StartsWith('<') && type.EndsWith('>'))
+                var isTemplate = type.StartsAndEndsWith('<', '>');
+                if (isTemplate)
                 {
                     var template = InstantiateControl(name, type.RemoveFirstAndLastCharacters(), state, callingType.TypeFullName, callingType.AssemblyFullName, templates);
                     templates.Add(name, template);
@@ -115,18 +115,23 @@ namespace Zen.GuiControls
                 {
                     var control = InstantiateControl(name, type, state, callingType.TypeFullName, callingType.AssemblyFullName, templates);
 
-                    var packagesList = GetPackages(state);
-                    var onClickEventHandler = GetOnClickEventHandler(state);
+                    var packagesList = state.GetAsListOfStrings("Packages");
+                    var onClickEventHandler = GetEventHandler(state, "Click");
                     if (onClickEventHandler.HasValue())
                     {
                         packagesList.Add(onClickEventHandler);
                     }
+                    var onDragEventHandler = GetEventHandler(state, "Drag");
+                    if (onDragEventHandler.HasValue())
+                    {
+                        packagesList.Add(onDragEventHandler);
+                    }
 
                     control.AddPackages(packagesList, callingType.TypeFullName, callingType.AssemblyFullName);
 
-                    var containsList = GetContains(state);
+                    var containsList = state.GetAsListOfStrings("Contains");
                     var parentContainerAlignment = GetParentContainerAlignment(state);
-                    var offset = GetOffset(state);
+                    var offset = state.GetAsPointI("Offset", PointI.Empty);
                     controls.Add(name, (control, containsList, parentContainerAlignment, offset));
                 }
             }
@@ -134,7 +139,7 @@ namespace Zen.GuiControls
             return controls;
         }
 
-        private static IControl InstantiateControl(string name, string type, Dictionary<string, string> state, string callingTypeFullName, string callingAssemblyFullName, Dictionary<string, IControl> templates)
+        private static IControl InstantiateControl(string name, string type, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName, Dictionary<string, IControl> templates)
         {
             IControl control;
             switch (type)
@@ -150,6 +155,9 @@ namespace Zen.GuiControls
                     break;
                 case "Image":
                     control = InstantiateImage(name, state);
+                    break;
+                case "Slider":
+                    control = InstantiateSlider(name, state);
                     break;
                 default:
                     if (templates.ContainsKey(type))
@@ -179,6 +187,12 @@ namespace Zen.GuiControls
                             control.Name = name;
                             control = UpdateImage((Image)control, state);
                         }
+                        else if (template is Slider slr)
+                        {
+                            control = slr.Clone();
+                            control.Name = name;
+                            control = UpdateSlider((Slider)control, state);
+                        }
                         else
                         {
                             throw new ArgumentOutOfRangeException(nameof(template), template, $"ControlType {template.GetType()} templating is not supported.");
@@ -194,11 +208,13 @@ namespace Zen.GuiControls
             return control;
         }
 
-        private static Label InstantiateLabel(string name, Dictionary<string, string> state, string callingTypeFullName, string callingAssemblyFullName)
+        private static Label InstantiateLabel(string name, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
         {
             try
             {
-                var control = new Label(name, state["FontName"]);
+                var fontName = state.GetAsString("FontName", string.Empty);
+
+                var control = new Label(name, fontName);
                 control = UpdateLabel(control, state, callingTypeFullName, callingAssemblyFullName);
                 
                 return control;
@@ -209,36 +225,35 @@ namespace Zen.GuiControls
             }
         }
 
-        private static Label UpdateLabel(Label control, Dictionary<string, string> state, string callingTypeFullName, string callingAssemblyFullName)
+        private static Label UpdateLabel(Label control, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
         {
-            if (state.ContainsKey("FontName")) control.FontName = state["FontName"];
+            control.PositionAlignment = state.GetAsAlignment("PositionAlignment", control.PositionAlignment);
+            control.SetPosition(state.GetAsPointI("Position", control.GetPosition()));
+            control.Size = state.GetAsPointI("Size", control.Size);
+            control.LayerDepth = state.GetAsSingle("LayerDepth", control.LayerDepth);
+            control.Enabled = state.GetAsBoolean("Enabled", control.Enabled);
 
-            if (state.ContainsKey("PositionAlignment")) control.PositionAlignment = TranslateAlignment(state["PositionAlignment"], "PositionAlignment");
-            if (state.ContainsKey("Position")) control.SetPosition(TranslatePointI(state["Position"], "Position"));
-            if (state.ContainsKey("Size")) control.Size = TranslatePointI(state["Size"], "Size");
-            if (state.ContainsKey("LayerDepth")) control.LayerDepth = Convert.ToSingle(state["LayerDepth"]);
-            if (state.ContainsKey("Enabled")) control.Enabled = Convert.ToBoolean(state["Enabled"]);
-
-            if (state.ContainsKey("ContentAlignment")) control.ContentAlignment = TranslateAlignment(state["ContentAlignment"], "ContentAlignment");
-            if (state.ContainsKey("Text")) control.Text = state["Text"];
-            if (state.ContainsKey("GetTextFunc")) control.GetTextFunc = TranslateGetTextFunc(state["GetTextFunc"], "GetTextFunc", callingTypeFullName, callingAssemblyFullName);
-            if (state.ContainsKey("TextColor")) control.TextColor = TranslateColor(state["TextColor"], "TextColor");
-            if (state.ContainsKey("TextShadowColor")) control.TextShadowColor = TranslateColor(state["TextShadowColor"], "TextShadowColor");
-            if (state.ContainsKey("BackgroundColor")) control.BackgroundColor = TranslateColor(state["BackgroundColor"], "BackgroundColor");
-            if (state.ContainsKey("BorderColor")) control.BorderColor = TranslateColor(state["BorderColor"], "BorderColor");
-            if (state.ContainsKey("Scale")) control.Scale = Convert.ToSingle(state["Scale"]);
+            control.FontName = state.GetAsString("FontName", control.FontName);
+            control.ContentAlignment = state.GetAsAlignment("ContentAlignment", control.ContentAlignment);
+            control.Text = state.GetAsString("Text", control.Text);
+            control.GetTextFunc = state.GetAsGetTextFunc("GetTextFunc", callingTypeFullName, callingAssemblyFullName);
+            control.TextColor = state.GetAsColor("TextColor", control.TextColor).GetValueOrDefault();
+            control.TextShadowColor = state.GetAsColor("TextShadowColor", control.TextShadowColor);
+            control.BackgroundColor = state.GetAsColor("BackgroundColor", control.BackgroundColor);
+            control.BorderColor = state.GetAsColor("BorderColor", control.BorderColor);
+            control.Scale = state.GetAsSingle("Scale", control.Scale);
 
             return control;
         }
 
-        private static Button InstantiateButton(string name, Dictionary<string, string> state)
+        private static Button InstantiateButton(string name, StateDictionary state)
         {
             try
             {
-                var textureNormal = state.ContainsKey("TextureNormal") ? state["TextureNormal"] : "";
-                var textureActive = state.ContainsKey("TextureActive") ? state["TextureActive"] : "";
-                var textureHover = state.ContainsKey("TextureHover") ? state["TextureHover"] : "";
-                var textureDisabled = state.ContainsKey("TextureDisabled") ? state["TextureDisabled"] : "";
+                var textureNormal = state.GetAsString("TextureNormal", string.Empty);
+                var textureActive = state.GetAsString("TextureActive", string.Empty);
+                var textureHover = state.GetAsString("TextureHover", string.Empty);
+                var textureDisabled = state.GetAsString("TextureDisabled", string.Empty);
 
                 var control = new Button(name, textureNormal, textureActive, textureHover, textureDisabled);
                 control = UpdateButton(control, state);
@@ -251,33 +266,32 @@ namespace Zen.GuiControls
             }
         }
 
-        private static Button UpdateButton(Button control, Dictionary<string, string> state)
+        private static Button UpdateButton(Button control, StateDictionary state)
         {
-            if (state.ContainsKey("TextureNormal")) control.TextureNormal = state["TextureNormal"];
-            if (state.ContainsKey("TextureActive")) control.TextureActive = state["TextureActive"];
-            if (state.ContainsKey("TextureHover")) control.TextureHover = state["TextureHover"];
-            if (state.ContainsKey("TextureDisabled")) control.TextureDisabled = state["TextureDisabled"];
+            control.PositionAlignment = state.GetAsAlignment("PositionAlignment", control.PositionAlignment);
+            control.SetPosition(state.GetAsPointI("Position", control.GetPosition()));
+            control.Size = state.GetAsPointI("Size", control.Size);
+            control.LayerDepth = state.GetAsSingle("LayerDepth", control.LayerDepth);
+            control.Enabled = state.GetAsBoolean("Enabled", control.Enabled);
 
-            if (state.ContainsKey("PositionAlignment")) control.PositionAlignment = TranslateAlignment(state["PositionAlignment"], "PositionAlignment");
-            if (state.ContainsKey("Position")) control.SetPosition(TranslatePointI(state["Position"], "Position"));
-            if (state.ContainsKey("Size")) control.Size = TranslatePointI(state["Size"], "Size");
-            if (state.ContainsKey("LayerDepth")) control.LayerDepth = Convert.ToSingle(state["LayerDepth"]);
-            if (state.ContainsKey("Enabled")) control.Enabled = Convert.ToBoolean(state["Enabled"]);
-
-            if (state.ContainsKey("Color")) control.Color = TranslateColor(state["Color"], "Color");
+            control.TextureNormal = state.GetAsString("TextureNormal", string.Empty);
+            control.TextureActive = state.GetAsString("TextureActive", string.Empty);
+            control.TextureHover = state.GetAsString("TextureHover", string.Empty);
+            control.TextureDisabled = state.GetAsString("TextureDisabled", string.Empty);
+            control.Color = state.GetAsColor("Color", control.Color).GetValueOrDefault();
 
             return control;
         }
 
-        private static Frame InstantiateFrame(string name, Dictionary<string, string> state)
+        private static Frame InstantiateFrame(string name, StateDictionary state)
         {
             try
             {
-                var textureName = state.ContainsKey("TextureName") ? state["TextureName"] : string.Empty;
-                var topPadding = state.ContainsKey("TopPadding") ? Convert.ToInt32(state["TopPadding"]) : 0;
-                var bottomPadding = state.ContainsKey("BottomPadding") ? Convert.ToInt32(state["BottomPadding"]) : 0;
-                var leftPadding = state.ContainsKey("LeftPadding") ? Convert.ToInt32(state["LeftPadding"]) : 0;
-                var rightPadding = state.ContainsKey("RightPadding") ? Convert.ToInt32(state["RightPadding"]) : 0;
+                var textureName = state.GetAsString("TextureName", string.Empty);
+                var topPadding = state.GetAsInt32("TopPadding", 0);
+                var bottomPadding = state.GetAsInt32("BottomPadding", 0);
+                var leftPadding = state.GetAsInt32("LeftPadding", 0);
+                var rightPadding = state.GetAsInt32("RightPadding", 0);
 
                 var control = new Frame(name, textureName, topPadding, bottomPadding, leftPadding, rightPadding);
                 control = UpdateFrame(control, state);
@@ -290,28 +304,28 @@ namespace Zen.GuiControls
             }
         }
 
-        private static Frame UpdateFrame(Frame control, Dictionary<string, string> state)
+        private static Frame UpdateFrame(Frame control, StateDictionary state)
         {
-            if (state.ContainsKey("TextureName")) control.TextureName = state["TextureName"];
-            if (state.ContainsKey("TopPadding")) control.TopPadding = Convert.ToInt32(state["TopPadding"]);
-            if (state.ContainsKey("BottomPadding")) control.BottomPadding = Convert.ToInt32(state["BottomPadding"]);
-            if (state.ContainsKey("LeftPadding")) control.LeftPadding = Convert.ToInt32(state["LeftPadding"]);
-            if (state.ContainsKey("RightPadding")) control.RightPadding = Convert.ToInt32(state["RightPadding"]);
+            control.PositionAlignment = state.GetAsAlignment("PositionAlignment", control.PositionAlignment);
+            control.SetPosition(state.GetAsPointI("Position", control.GetPosition()));
+            control.Size = state.GetAsPointI("Size", control.Size);
+            control.LayerDepth = state.GetAsSingle("LayerDepth", control.LayerDepth);
+            control.Enabled = state.GetAsBoolean("Enabled", control.Enabled);
 
-            if (state.ContainsKey("PositionAlignment")) control.PositionAlignment = TranslateAlignment(state["PositionAlignment"], "PositionAlignment");
-            if (state.ContainsKey("Position")) control.SetPosition(TranslatePointI(state["Position"], "Position"));
-            if (state.ContainsKey("Size")) control.Size = TranslatePointI(state["Size"], "Size");
-            if (state.ContainsKey("LayerDepth")) control.LayerDepth = Convert.ToSingle(state["LayerDepth"]);
-            if (state.ContainsKey("Enabled")) control.Enabled = Convert.ToBoolean(state["Enabled"]);
+            control.TextureName = state.GetAsString("TextureName", string.Empty);
+            control.TopPadding = state.GetAsInt32("TopPadding", control.TopPadding);
+            control.BottomPadding = state.GetAsInt32("BottomPadding", control.BottomPadding);
+            control.LeftPadding = state.GetAsInt32("LeftPadding", control.LeftPadding);
+            control.RightPadding = state.GetAsInt32("RightPadding", control.RightPadding);
 
             return control;
         }
 
-        private static IControl InstantiateImage(string name, Dictionary<string, string> state)
+        private static IControl InstantiateImage(string name, StateDictionary state)
         {
             try
             {
-                var textureName = state.ContainsKey("TextureName") ? state["TextureName"] : string.Empty;
+                var textureName = state.GetAsString("TextureName", string.Empty);
 
                 var control = new Image(name, textureName);
                 control = UpdateImage(control, state);
@@ -324,181 +338,67 @@ namespace Zen.GuiControls
             }
         }
 
-        private static Image UpdateImage(Image control, Dictionary<string, string> state)
+        private static Image UpdateImage(Image control, StateDictionary state)
         {
-            if (state.ContainsKey("TextureName")) control.TextureName = state["TextureName"];
+            control.PositionAlignment = state.GetAsAlignment("PositionAlignment", control.PositionAlignment);
+            control.SetPosition(state.GetAsPointI("Position", control.GetPosition()));
+            control.Size = state.GetAsPointI("Size", control.Size);
+            control.LayerDepth = state.GetAsSingle("LayerDepth", control.LayerDepth);
+            control.Enabled = state.GetAsBoolean("Enabled", control.Enabled);
 
-            if (state.ContainsKey("PositionAlignment")) control.PositionAlignment = TranslateAlignment(state["PositionAlignment"], "PositionAlignment");
-            if (state.ContainsKey("Position")) control.SetPosition(TranslatePointI(state["Position"], "Position"));
-            if (state.ContainsKey("Size")) control.Size = TranslatePointI(state["Size"], "Size");
+            control.TextureName = state.GetAsString("TextureName", string.Empty);
 
             return control;
         }
 
-        private static Color TranslateColor(string colorAsString, string propertyName)
+        private static IControl InstantiateSlider(string name, StateDictionary state)
         {
             try
             {
-                var tempColor = System.Drawing.Color.FromName(colorAsString);
-                var color = new Color(tempColor.R, tempColor.G, tempColor.B, tempColor.A);
+                var textureName = state.GetAsString("TextureName", string.Empty);
 
-                return color;
+                var control = new Slider(name, textureName);
+                control = UpdateSlider(control, state);
+
+                return control;
             }
             catch (Exception e)
             {
-                throw new Exception($"Failed To convert [{colorAsString}] for [{propertyName}] to Color.", e);
+                throw new Exception($"Failed to create slider [{name}]", e);
             }
         }
 
-        private static Alignment TranslateAlignment(string alignmentAsString, string propertyName)
+        private static Slider UpdateSlider(Slider control, StateDictionary state)
         {
-            try
-            {
-                var success = Enum.TryParse(alignmentAsString, out Alignment alignment);
-                if (!success) throw new Exception($"Alignment {alignmentAsString} could not be translated.");
+            control.PositionAlignment = state.GetAsAlignment("PositionAlignment", control.PositionAlignment);
+            control.SetPosition(state.GetAsPointI("Position", control.GetPosition()));
+            control.Size = state.GetAsPointI("Size", control.Size);
+            control.LayerDepth = state.GetAsSingle("LayerDepth", control.LayerDepth);
+            control.Enabled = state.GetAsBoolean("Enabled", control.Enabled);
 
-                return alignment;
-            }
-            catch (Exception e)
-            {
-                throw new Exception($"Failed To convert [{alignmentAsString}] for [{propertyName}] to Alignment.", e);
-            }
+            control.TextureName = state.GetAsString("TextureName", string.Empty);
+            control.MinimumValue = state.GetAsInt32("MinimumValue", 0);
+            control.MaximumValue = state.GetAsInt32("MaximumValue", 0);
+            control.CurrentValue = state.GetAsInt32("CurrentValue", 0);
+
+            return control;
         }
 
-        private static ParentContainerAlignment TranslateParentContainerAlignment(string alignmentAsString, string propertyName)
+        private static string GetEventHandler(StateDictionary state, string eventHandlerName)
         {
-            try
-            {
-                var success = Enum.TryParse(alignmentAsString, out ParentContainerAlignment alignment);
-                if (!success) throw new Exception($"ParentContainerAlignment {alignmentAsString} could not be translated.");
+            if (!state.ContainsKey($"On{eventHandlerName}")) return string.Empty;
 
-                return alignment;
-            }
-            catch (Exception e)
-            {
-                throw new Exception($"Failed To convert [{alignmentAsString}] for [{propertyName}] to ParentContainerAlignment.", e);
-            }
+            var eventHandlerAsString = state.GetAsString($"On{eventHandlerName}", string.Empty);
+            var eventHandlerAsString2 = $"'Zen.GuiControls.PackagesClasses.Control{eventHandlerName}, Zen.GuiControls - {eventHandlerAsString}'"; // remove single quotes
+
+            return eventHandlerAsString2;
         }
 
-        private static PointI TranslatePointI(string pointIAsString, string propertyName)
-        {
-            try
-            {
-                var x = Convert.ToInt32(pointIAsString.Split(';')[0].Trim());
-                var y = Convert.ToInt32(pointIAsString.Split(';')[1].Trim());
-                var pointI = new PointI(x, y);
-
-                return pointI;
-            }
-            catch (Exception e)
-            {
-                throw new Exception($"Failed To convert [{pointIAsString}] for [{propertyName}] to PointI.", e);
-            }
-        }
-
-        private static Func<object, string> TranslateGetTextFunc(string getTextFuncAsString, string propertyName, string callingTypeFullName, string callingAssemblyFullName) // 'Game1.EventHandlers, Game1 - GetTextFunc' or 'Game1.EventHandlers.GetTextFunc' or 'GetTextFunc'
-        {
-            try
-            {
-                var firstAndLastCharactersRemoved = getTextFuncAsString.RemoveFirstAndLastCharacters(); // remove single quotes
-                var split = firstAndLastCharactersRemoved.Split('-');
-
-                if (split.Length > 1) // if 'Game1.EventHandlers, Game1 - GetTextFunc'
-                {
-                    var assemblyQualifiedName = split[0].Trim(); // Game1.EventHandlers, Game1
-                    var methodName = split[1].Trim(); // GetTextFunc
-                    var func = ObjectCreator.CreateFuncDelegate(assemblyQualifiedName, methodName);
-
-                    return func;
-                }
-
-                split = split[0].Split('.');
-
-                if (split.Length == 1)
-                {
-                    var methodName = split[0].Trim();
-                    var assemblyQualifiedName = $"{callingTypeFullName}, {callingAssemblyFullName}";
-                    var func = ObjectCreator.CreateFuncDelegate(assemblyQualifiedName, methodName);
-
-                    return func;
-                }
-
-                // else: 'Game1.EventHandlers.GetTextFunc'
-                if (split.Length > 1)
-                {
-                    var methodName = split[^1].Trim(); // GetTextFunc
-                    var className = split[^2].Trim(); // EventHandlers
-                    var nameSpace = firstAndLastCharactersRemoved.Replace($".{methodName}", string.Empty).Replace($".{className}", string.Empty); // Game1
-                    var assemblyQualifiedName = $"{nameSpace}.{className}, {callingAssemblyFullName}"; // Game1.EventHandlers, Game1
-                    var func = ObjectCreator.CreateFuncDelegate(assemblyQualifiedName, methodName);
-
-                    return func;
-                }
-
-                throw new Exception($"Failed to convert [{getTextFuncAsString}] for property [{propertyName}] to Func.");
-            }
-            catch (Exception e)
-            {
-                throw new Exception($"Failed to convert [{getTextFuncAsString}] for property [{propertyName}] to Func.", e);
-            }
-        }
-
-        private static List<string> GetPackages(Dictionary<string, string> state)
-        {
-            if (!state.ContainsKey("Packages")) return new List<string>();
-
-            var packagesList = new List<string>();
-            var packagesAsString = state["Packages"];
-            try
-            {
-                var pack = packagesAsString.RemoveFirstAndLastCharacters(); // remove square braces
-                var packages = pack.Split(';');
-                packagesList.AddRange(packages);
-            }
-            catch (Exception e)
-            {
-                throw new Exception($"Failed to get packages for [{packagesAsString}].", e);
-            }
-
-            return packagesList;
-        }
-
-        private static string GetOnClickEventHandler(Dictionary<string, string> state)
-        {
-            if (!state.ContainsKey("OnClick")) return string.Empty;
-
-            var onClickEventHandlerAsString = state["OnClick"];
-            var onClickEventHandlerAsString2 = $"'Zen.GuiControls.PackagesClasses.ControlClick, Zen.GuiControls - {onClickEventHandlerAsString.RemoveFirstAndLastCharacters()}'"; // remove single quotes
-
-            return onClickEventHandlerAsString2;
-        }
-
-        private static List<string> GetContains(Dictionary<string, string> state)
-        {
-            if (!state.ContainsKey("Contains")) return new List<string>();
-
-            var containsList = new List<string>();
-            var containsAsString = state["Contains"];
-            try
-            {
-                var cont = containsAsString.RemoveFirstAndLastCharacters(); // remove square braces
-                var contains = cont.Split(';');
-                containsList.AddRange(contains);
-            }
-            catch (Exception e)
-            {
-                throw new Exception($"Failed to get contains for [{containsAsString}].", e);
-            }
-
-            return containsList;
-        }
-
-        private static (Alignment parent, Alignment child) GetParentContainerAlignment(Dictionary<string, string> state)
+        private static (Alignment parent, Alignment child) GetParentContainerAlignment(StateDictionary state)
         {
             if (!state.ContainsKey("ParentContainerAlignment")) return (Alignment.TopLeft, Alignment.TopLeft);
 
-            var parentContainerAlignmentAsString = state["ParentContainerAlignment"];
-            var parentContainerAlignment = TranslateParentContainerAlignment(parentContainerAlignmentAsString, "ParentContainerAlignment");
+            var parentContainerAlignment = state.GetAsParentContainerAlignment("ParentContainerAlignment",  ParentContainerAlignment.ParentTopLeftAlignsWithChildTopLeft);
 
             switch (parentContainerAlignment)
             {
@@ -676,16 +576,6 @@ namespace Zen.GuiControls
                 default:
                     throw new ArgumentOutOfRangeException(nameof(parentContainerAlignment), parentContainerAlignment, $"ParentContainerAlignment {parentContainerAlignment} is not supported.");
             }
-        }
-
-        private static PointI GetOffset(Dictionary<string, string> state)
-        {
-            if (!state.ContainsKey("Offset")) return PointI.Zero;
-
-            var offsetAsString = state["Offset"];
-            var offset = TranslatePointI(offsetAsString, "Offset");
-
-            return offset;
         }
     }
 }
