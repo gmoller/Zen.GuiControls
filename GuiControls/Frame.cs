@@ -1,10 +1,7 @@
 ﻿using System.Diagnostics;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Zen.Assets;
-using Zen.MonoGameUtilities.ExtensionMethods;
-using Zen.Utilities;
 using Zen.Utilities.ExtensionMethods;
 
 namespace Zen.GuiControls
@@ -13,96 +10,74 @@ namespace Zen.GuiControls
     public class Frame : ControlWithSingleTexture
     {
         #region State
+        /// <summary>
+        /// Used to 'stretch' the texture to the size of the frame. Using 9-slice scaling (http://en.wikipedia.org/wiki/9-slice_scaling)
+        /// </summary>
         public int TopPadding { get; set; }
+        /// <summary>
+        /// Used to 'stretch' the texture to the size of the frame. Using 9-slice scaling (http://en.wikipedia.org/wiki/9-slice_scaling)
+        /// </summary>
         public int BottomPadding { get; set; }
+        /// <summary>
+        /// Used to 'stretch' the texture to the size of the frame. Using 9-slice scaling (http://en.wikipedia.org/wiki/9-slice_scaling)
+        /// </summary>
         public int LeftPadding { get; set; }
+        /// <summary>
+        /// Used to 'stretch' the texture to the size of the frame. Using 9-slice scaling (http://en.wikipedia.org/wiki/9-slice_scaling)
+        /// </summary>
         public int RightPadding { get; set; }
-
-        private Rectangle[] _sourcePatches;
-        private Rectangle[] _destinationPatches;
         #endregion
 
         /// <summary>
         /// Use this constructor if Frame is expected to be stand alone (have no parent).
         /// </summary>
         /// <param name="name">Name of frame control.</param>
-        /// <param name="textureName">Texture to use for rendering. If texture is from a texture atlas use 'AtlasName.TextureName'</param>
-        /// <param name="topPadding">Used to 'stretch' the texture to the size of the frame. Using 9-slice scaling (http://en.wikipedia.org/wiki/9-slice_scaling)</param>
-        /// <param name="bottomPadding">Used to 'stretch' the texture to the size of the frame. Using 9-slice scaling (http://en.wikipedia.org/wiki/9-slice_scaling)</param>
-        /// <param name="leftPadding">Used to 'stretch' the texture to the size of the frame. Using 9-slice scaling (http://en.wikipedia.org/wiki/9-slice_scaling)</param>
-        /// <param name="rightPadding">Used to 'stretch' the texture to the size of the frame. Using 9-slice scaling (http://en.wikipedia.org/wiki/9-slice_scaling)</param>
-        public Frame(
-            string name,
-            string textureName = "",
-            int topPadding = 0,
-            int bottomPadding = 0,
-            int leftPadding = 0,
-            int rightPadding = 0) :
-            base(name, textureName)
+        public Frame(string name) : base(name)
         {
-            TopPadding = topPadding;
-            BottomPadding = bottomPadding;
-            LeftPadding = leftPadding;
-            RightPadding = rightPadding;
         }
 
-        public Frame Clone()
+        private Frame(Frame other) : base(other)
         {
-            var clone = new Frame(Name, TextureName, TopPadding, BottomPadding, LeftPadding, RightPadding);
-            clone.Status = Status;
-            clone.Enabled = Enabled;
-            clone.PositionAlignment = PositionAlignment;
-            clone.SetPosition(GetPosition());
-            clone.Size = Size;
-            clone.Owner = Owner;
-            clone.Parent = Parent;
-            clone.LayerDepth = LayerDepth;
-
-            return clone;
+            TopPadding = other.TopPadding;
+            BottomPadding = other.BottomPadding;
+            LeftPadding = other.LeftPadding;
+            RightPadding = other.RightPadding;
         }
 
-        public override void LoadContent(ContentManager content, bool loadChildrenContent = false)
+        public override IControl Clone()
         {
-            if (TextureAtlas.HasValue())
-            {
-                Texture = AssetsManager.Instance.GetTexture(TextureAtlas);
-                var atlas = AssetsManager.Instance.GetAtlas(TextureAtlas);
-
-                var frame = atlas.Frames[TextureName];
-
-                _sourcePatches = CreatePatches(frame.ToRectangle(), TopPadding, BottomPadding, LeftPadding, RightPadding);
-            }
-            else if (TextureName.HasValue())
-            {
-                Texture = AssetsManager.Instance.GetTexture(TextureName);
-                var frame = Texture.Bounds;
-                _sourcePatches = CreatePatches(frame, TopPadding, BottomPadding, LeftPadding, RightPadding);
-            }
-
-            _destinationPatches = CreatePatches(new Rectangle(TopLeft.X, TopLeft.Y, Size.X, Size.Y), TopPadding, BottomPadding, LeftPadding, RightPadding);
-
-            base.LoadContent(content, loadChildrenContent);
+            return new Frame(this);
         }
 
         protected override void InDraw(SpriteBatch spriteBatch)
         {
-            if (Texture.HasValue())
+            if (TextureName.HasValue())
             {
-                for (var i = 0; i < _sourcePatches.Length; ++i)
+                Rectangle[] sourcePatches;
+                Texture2D texture;
+                var textureAtlas = ControlHelper.GetTextureAtlas(TextureName);
+                if (textureAtlas.HasValue())
                 {
-                    spriteBatch.Draw(Texture, _destinationPatches[i], _sourcePatches[i], Color, 0.0f, Vector2.Zero,
-                        SpriteEffects.None, LayerDepth);
+                    var atlas = AssetsManager.Instance.GetAtlas(textureAtlas);
+                    texture = AssetsManager.Instance.GetTexture(textureAtlas);
+
+                    var textureName = ControlHelper.GetTextureName(TextureName);
+                    var frame = atlas.Frames[textureName];
+
+                    sourcePatches = CreatePatches(frame.ToRectangle(), TopPadding, BottomPadding, LeftPadding, RightPadding);
                 }
-            }
-        }
+                else
+                {
+                    texture = AssetsManager.Instance.GetTexture(TextureName);
+                    var frame = texture.Bounds;
+                    sourcePatches = CreatePatches(frame, TopPadding, BottomPadding, LeftPadding, RightPadding);
+                }
 
-        public override void SetPosition(PointI point)
-        {
-            base.SetPosition(point);
-
-            if (_destinationPatches != null)
-            {
-                _destinationPatches = CreatePatches(new Rectangle(TopLeft.X, TopLeft.Y, Size.X, Size.Y), TopPadding, BottomPadding, LeftPadding, RightPadding);
+                var destinationPatches = CreatePatches(new Rectangle(TopLeft.X, TopLeft.Y, Size.X, Size.Y), TopPadding, BottomPadding, LeftPadding, RightPadding);
+                for (var i = 0; i < sourcePatches.Length; ++i)
+                {
+                    spriteBatch.Draw(texture, destinationPatches[i], sourcePatches[i], Color, 0.0f, Vector2.Zero, SpriteEffects.None, LayerDepth);
+                }
             }
         }
 

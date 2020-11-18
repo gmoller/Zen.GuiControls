@@ -45,8 +45,7 @@ frmTest : Frame
             Assert.AreEqual(new PointI(1780, 100), ctrl1.BottomRight);
 
             var frame1 = (Frame)ctrl1;
-            Assert.AreEqual("GUI_Textures_1", frame1.TextureAtlas);
-            Assert.AreEqual("frame_texture", frame1.TextureName);
+            Assert.AreEqual("GUI_Textures_1.frame_texture", frame1.TextureName);
         }
 
         [Test]
@@ -72,7 +71,7 @@ lblTest : Label
   Size: [100;15]
   ContentAlignment: TopLeft
   Text: 'Hello'
-  TextColor: Yellow
+  Color: Yellow
 
   ParentContainerAlignment: ParentTopLeftAlignsWithChildTopLeft
   Offset: [20;20]
@@ -127,7 +126,7 @@ lblTemplate1 : <lbl>
   Size: [100;15]
   ContentAlignment: TopLeft
   Text: 'Hello'
-  TextColor: Yellow
+  Color: Yellow
 }
 
 lblTemplate2 : <lblTemplate1>
@@ -173,11 +172,11 @@ lblTest3 : lblTemplate1
             Assert.AreEqual(new PointI(150, 50), label1.TopRight);
             Assert.AreEqual(new PointI(50, 65), label1.BottomLeft);
             Assert.AreEqual(new PointI(150, 65), label1.BottomRight);
-            //Assert.AreEqual("Arial", label1.FontName);
+            Assert.AreEqual("Arial", label1.FontName);
             Assert.AreEqual(Alignment.TopLeft, label1.ContentAlignment);
             Assert.AreEqual("Hello", label1.Text);
-            Assert.AreEqual(Color.Yellow, label1.TextColor);
-            Assert.AreEqual(null, label1.BorderColor);
+            Assert.AreEqual(Color.Yellow, label1.Color, "Color incorrect.");
+            Assert.AreEqual(Color.Transparent, label1.BorderColor);
 
             var label2 = (Label)lblTest2;
             Assert.AreEqual("lblTest2", label2.Name);
@@ -187,11 +186,11 @@ lblTest3 : lblTemplate1
             Assert.AreEqual(new PointI(150, 50), label2.TopRight);
             Assert.AreEqual(new PointI(50, 65), label2.BottomLeft);
             Assert.AreEqual(new PointI(150, 65), label2.BottomRight);
-            //Assert.AreEqual("Arial", label2.FontName);
+            Assert.AreEqual("Arial", label2.FontName);
             Assert.AreEqual(Alignment.TopLeft, label2.ContentAlignment);
             Assert.AreEqual("Hello", label2.Text);
-            Assert.AreEqual(Color.Yellow, label2.TextColor);
-            Assert.AreEqual(Color.Red, label2.BorderColor);
+            Assert.AreEqual(Color.Yellow, label2.Color);
+            Assert.AreEqual(Color.Red, label2.BorderColor, "BorderColor incorrect.");
 
             var label3 = (Label)lblTest3;
             Assert.AreEqual("lblTest3", label3.Name);
@@ -201,10 +200,10 @@ lblTest3 : lblTemplate1
             Assert.AreEqual(new PointI(150, 50), label3.TopRight);
             Assert.AreEqual(new PointI(50, 65), label3.BottomLeft);
             Assert.AreEqual(new PointI(150, 65), label3.BottomRight);
-            //Assert.AreEqual("Arial", label3.FontName);
+            Assert.AreEqual("Arial", label3.FontName);
             Assert.AreEqual(Alignment.TopLeft, label3.ContentAlignment);
             Assert.AreEqual("Goodbye", label3.Text);
-            Assert.AreEqual(Color.Yellow, label3.TextColor);
+            Assert.AreEqual(Color.Yellow, label3.Color);
             Assert.AreEqual(Color.Red, label3.BorderColor);
         }
     }

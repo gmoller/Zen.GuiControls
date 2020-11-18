@@ -7,7 +7,7 @@ using Zen.Utilities;
 
 namespace Zen.GuiControls
 {
-    public interface IControl : IIdentifiedById
+    public interface IControl
     {
         /// <summary>
         /// Name of the control.
@@ -26,24 +26,61 @@ namespace Zen.GuiControls
         IControl Parent { get; set; }
 
         /// <summary>
+        /// Position on screen of the control.
+        /// </summary>
+        PointI Position { get; set; }
+
+        /// <summary>
+        /// Qualifies the position, is that position TopLeft, Center, etc. ?
+        /// </summary>
+        public Alignment PositionAlignment { get; set; }
+
+        /// <summary>
+        /// Size (in pixels) of the control.
+        /// </summary>
+        PointI Size { get; set; }
+
+        /// <summary>
+        /// Color of the control.
+        /// </summary>
+        public Color Color { get; set; }
+
+        /// <summary>
+        /// Background color of the control.
+        /// </summary>
+        public Color BackgroundColor { get; set; }
+
+        /// <summary>
+        /// Border color of the control.
+        /// </summary>
+        public Color BorderColor { get; set; }
+
+        /// <summary>
+        /// Is enabled?
+        /// </summary>
+        bool Enabled { get; set; }
+
+        /// <summary>
+        /// Is drawn to the screen?
+        /// </summary>
+        bool Visible { get; set; }
+
+        public float LayerDepth { get; set; }
+
+        /// <summary>
         /// 
         /// </summary>
         ControlStatus Status { get; set; }
 
         /// <summary>
-        /// 
-        /// </summary>
-        bool Enabled { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        bool Visible { get; set; }
-
-        /// <summary>
         /// Enumerable list of all child controls "owned" by this control.
         /// </summary>
         Controls ChildControls { get; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        Packages Packages { get; }
 
         /// <summary>
         /// Indexer by index to get a child control.
@@ -130,14 +167,11 @@ namespace Zen.GuiControls
 
         int Width { get; }
         int Height { get; }
-        PointI Size { get; set; }
 
         void AddPackage(IPackage package);
         void AddPackages(List<string> packages, string callingTypeFullName, string callingAssemblyFullName);
         void AddControl(Control childControl, Alignment parentAlignment = Alignment.TopLeft, Alignment childAlignment = Alignment.None, PointI offset = new PointI());
 
-        PointI GetPosition();
-        void SetPosition(PointI point);
         void MovePosition(PointI point);
 
         void LoadContent(ContentManager content, bool loadChildrenContent = false);

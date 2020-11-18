@@ -19,7 +19,7 @@ namespace Zen.GuiControls
             var potentialControls = GetPotentialControls(allTheLines, pairsDictionary);
 
             var staging = GetStagingControls(potentialControls, callingType);
-                                                                                                                                                                                                                                                                                                                                                                                        
+
             // handle contains
             foreach (var control in staging.Values)
             {
@@ -212,9 +212,7 @@ namespace Zen.GuiControls
         {
             try
             {
-                var fontName = state.GetAsString("FontName", string.Empty);
-
-                var control = new Label(name, fontName);
+                var control = new Label(name);
                 control = UpdateLabel(control, state, callingTypeFullName, callingAssemblyFullName);
                 
                 return control;
@@ -227,20 +225,13 @@ namespace Zen.GuiControls
 
         private static Label UpdateLabel(Label control, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
         {
-            control.PositionAlignment = state.GetAsAlignment("PositionAlignment", control.PositionAlignment);
-            control.SetPosition(state.GetAsPointI("Position", control.GetPosition()));
-            control.Size = state.GetAsPointI("Size", control.Size);
-            control.LayerDepth = state.GetAsSingle("LayerDepth", control.LayerDepth);
-            control.Enabled = state.GetAsBoolean("Enabled", control.Enabled);
+            control = (Label)UpdateGenericProperties(control, state);
 
             control.FontName = state.GetAsString("FontName", control.FontName);
             control.ContentAlignment = state.GetAsAlignment("ContentAlignment", control.ContentAlignment);
             control.Text = state.GetAsString("Text", control.Text);
             control.GetTextFunc = state.GetAsGetTextFunc("GetTextFunc", callingTypeFullName, callingAssemblyFullName);
-            control.TextColor = state.GetAsColor("TextColor", control.TextColor).GetValueOrDefault();
             control.TextShadowColor = state.GetAsColor("TextShadowColor", control.TextShadowColor);
-            control.BackgroundColor = state.GetAsColor("BackgroundColor", control.BackgroundColor);
-            control.BorderColor = state.GetAsColor("BorderColor", control.BorderColor);
             control.Scale = state.GetAsSingle("Scale", control.Scale);
 
             return control;
@@ -250,12 +241,7 @@ namespace Zen.GuiControls
         {
             try
             {
-                var textureNormal = state.GetAsString("TextureNormal", string.Empty);
-                var textureActive = state.GetAsString("TextureActive", string.Empty);
-                var textureHover = state.GetAsString("TextureHover", string.Empty);
-                var textureDisabled = state.GetAsString("TextureDisabled", string.Empty);
-
-                var control = new Button(name, textureNormal, textureActive, textureHover, textureDisabled);
+                var control = new Button(name);
                 control = UpdateButton(control, state);
 
                 return control;
@@ -268,17 +254,23 @@ namespace Zen.GuiControls
 
         private static Button UpdateButton(Button control, StateDictionary state)
         {
-            control.PositionAlignment = state.GetAsAlignment("PositionAlignment", control.PositionAlignment);
-            control.SetPosition(state.GetAsPointI("Position", control.GetPosition()));
-            control.Size = state.GetAsPointI("Size", control.Size);
-            control.LayerDepth = state.GetAsSingle("LayerDepth", control.LayerDepth);
-            control.Enabled = state.GetAsBoolean("Enabled", control.Enabled);
+            control = (Button)UpdateGenericProperties(control, state);
 
-            control.TextureNormal = state.GetAsString("TextureNormal", string.Empty);
-            control.TextureActive = state.GetAsString("TextureActive", string.Empty);
-            control.TextureHover = state.GetAsString("TextureHover", string.Empty);
-            control.TextureDisabled = state.GetAsString("TextureDisabled", string.Empty);
-            control.Color = state.GetAsColor("Color", control.Color).GetValueOrDefault();
+            control.TextureName = state.GetAsString("TextureName", string.Empty);
+
+            control.Dictionary = new Dictionary<string, string>
+            {
+                {"Active-True", "TextureActive"},
+                {"Active-False", "TextureActive"},
+                {"MouseOver-True", "TextureHover"},
+                {"None-True", "TextureNormal"},
+                {"None-False", "TextureDisabled"},
+                {"MouseOver-False", "TextureDisabled"}
+            };
+            control.AddTexture("TextureActive", state.GetAsString("TextureActive", string.Empty));
+            control.AddTexture("TextureHover", state.GetAsString("TextureHover", string.Empty));
+            control.AddTexture("TextureNormal", state.GetAsString("TextureNormal", string.Empty));
+            control.AddTexture("TextureDisabled", state.GetAsString("TextureDisabled", string.Empty));
 
             return control;
         }
@@ -287,13 +279,7 @@ namespace Zen.GuiControls
         {
             try
             {
-                var textureName = state.GetAsString("TextureName", string.Empty);
-                var topPadding = state.GetAsInt32("TopPadding", 0);
-                var bottomPadding = state.GetAsInt32("BottomPadding", 0);
-                var leftPadding = state.GetAsInt32("LeftPadding", 0);
-                var rightPadding = state.GetAsInt32("RightPadding", 0);
-
-                var control = new Frame(name, textureName, topPadding, bottomPadding, leftPadding, rightPadding);
+                var control = new Frame(name);
                 control = UpdateFrame(control, state);
 
                 return control;
@@ -306,11 +292,7 @@ namespace Zen.GuiControls
 
         private static Frame UpdateFrame(Frame control, StateDictionary state)
         {
-            control.PositionAlignment = state.GetAsAlignment("PositionAlignment", control.PositionAlignment);
-            control.SetPosition(state.GetAsPointI("Position", control.GetPosition()));
-            control.Size = state.GetAsPointI("Size", control.Size);
-            control.LayerDepth = state.GetAsSingle("LayerDepth", control.LayerDepth);
-            control.Enabled = state.GetAsBoolean("Enabled", control.Enabled);
+            control = (Frame)UpdateGenericProperties(control, state);
 
             control.TextureName = state.GetAsString("TextureName", string.Empty);
             control.TopPadding = state.GetAsInt32("TopPadding", control.TopPadding);
@@ -325,9 +307,7 @@ namespace Zen.GuiControls
         {
             try
             {
-                var textureName = state.GetAsString("TextureName", string.Empty);
-
-                var control = new Image(name, textureName);
+                var control = new Image(name);
                 control = UpdateImage(control, state);
 
                 return control;
@@ -340,11 +320,7 @@ namespace Zen.GuiControls
 
         private static Image UpdateImage(Image control, StateDictionary state)
         {
-            control.PositionAlignment = state.GetAsAlignment("PositionAlignment", control.PositionAlignment);
-            control.SetPosition(state.GetAsPointI("Position", control.GetPosition()));
-            control.Size = state.GetAsPointI("Size", control.Size);
-            control.LayerDepth = state.GetAsSingle("LayerDepth", control.LayerDepth);
-            control.Enabled = state.GetAsBoolean("Enabled", control.Enabled);
+            control = (Image)UpdateGenericProperties(control, state);
 
             control.TextureName = state.GetAsString("TextureName", string.Empty);
 
@@ -355,9 +331,7 @@ namespace Zen.GuiControls
         {
             try
             {
-                var textureName = state.GetAsString("TextureName", string.Empty);
-
-                var control = new Slider(name, textureName);
+                var control = new Slider(name);
                 control = UpdateSlider(control, state);
 
                 return control;
@@ -370,16 +344,29 @@ namespace Zen.GuiControls
 
         private static Slider UpdateSlider(Slider control, StateDictionary state)
         {
-            control.PositionAlignment = state.GetAsAlignment("PositionAlignment", control.PositionAlignment);
-            control.SetPosition(state.GetAsPointI("Position", control.GetPosition()));
-            control.Size = state.GetAsPointI("Size", control.Size);
-            control.LayerDepth = state.GetAsSingle("LayerDepth", control.LayerDepth);
-            control.Enabled = state.GetAsBoolean("Enabled", control.Enabled);
+            control = (Slider)UpdateGenericProperties(control, state);
 
+            control.GripSize = state.GetAsPointI("GripSize", PointI.Empty);
             control.TextureName = state.GetAsString("TextureName", string.Empty);
+            control.TextureGrip = state.GetAsString("TextureGrip", string.Empty);
             control.MinimumValue = state.GetAsInt32("MinimumValue", 0);
             control.MaximumValue = state.GetAsInt32("MaximumValue", 0);
             control.CurrentValue = state.GetAsInt32("CurrentValue", 0);
+
+            return control;
+        }
+
+        private static IControl UpdateGenericProperties(IControl control, StateDictionary state)
+        {
+            control.Position = state.GetAsPointI("Position", control.Position);
+            control.PositionAlignment = state.GetAsAlignment("PositionAlignment", control.PositionAlignment);
+            control.Size = state.GetAsPointI("Size", control.Size);
+            control.Color = state.GetAsColor("Color", control.Color);
+            control.BackgroundColor = state.GetAsColor("BackgroundColor", control.BackgroundColor);
+            control.BorderColor = state.GetAsColor("BorderColor", control.BorderColor);
+            control.Enabled = state.GetAsBoolean("Enabled", control.Enabled);
+            control.Visible = state.GetAsBoolean("Visible", control.Visible);
+            control.LayerDepth = state.GetAsSingle("LayerDepth", control.LayerDepth);
 
             return control;
         }

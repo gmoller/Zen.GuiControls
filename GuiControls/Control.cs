@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Zen.Assets;
 using Zen.Input;
+using Zen.MonoGameUtilities;
 using Zen.MonoGameUtilities.ExtensionMethods;
 using Zen.Utilities;
 using Zen.Utilities.ExtensionMethods;
@@ -13,23 +15,7 @@ namespace Zen.GuiControls
     public abstract class Control : IControl
     {
         #region State
-        public int Id { get; }
         public string Name { get; set; }
-
-        public ControlStatus Status { get; set; }
-        public bool Enabled { get; set; }
-        public bool Visible { get; set; }
-        public Controls ChildControls { get; }
-
-        /// <summary>
-        /// Qualifies the position, is that position TopLeft, Center, etc. ?
-        /// </summary>
-        public Alignment PositionAlignment { get; set; }
-
-        /// <summary>
-        /// Size of control in pixels.
-        /// </summary>
-        public PointI Size { get; set; }
 
         private object _owner;
         public object Owner
@@ -37,40 +23,49 @@ namespace Zen.GuiControls
             get => _owner;
             set
             {
+                ChildControls?.SetOwner(value);
                 _owner = value;
-
-                ChildControls.SetOwner(value);
             }
         }
+
         public IControl Parent { get; set; }
-        public float LayerDepth { get; set; }
 
-        /// <summary>
-        /// Position of control.
-        /// </summary>
-        private Vector2 Position { get; set; }
-        private Packages Packages { get; }
-        #endregion
-
-        protected Control(string name)
+        private PointI _position;
+        public PointI Position
         {
-            Name = name;
-            LayerDepth = 0.0f;
-
-            Position = Vector2.Zero;
-            PositionAlignment = Alignment.TopLeft;
-            Size = PointI.Zero;
-
-            Status = ControlStatus.None;
-            Enabled = true;
-            Visible = true;
-
-            ChildControls = new Controls();
-            Packages = new Packages();
+            get => _position;
+            set
+            {
+                ChildControls?.SetTopLeftPosition(value);
+                _position = value;
+            }
         }
 
+        public Alignment PositionAlignment { get; set; }
+
+        public PointI Size { get; set; }
+
+        public Color Color { get; set; }
+
+        public Color BackgroundColor { get; set; }
+
+        public Color BorderColor { get; set; }
+
+        public bool Enabled { get; set; }
+
+        public bool Visible { get; set; }
+
+        public float LayerDepth { get; set; }
+
+        public ControlStatus Status { get; set; }
+
+        public Controls ChildControls { get; }
+
+        public Packages Packages { get; }
+        #endregion
+
         #region Accessors
-        protected Rectangle ActualDestinationRectangle => ControlHelper.DetermineArea(Position, PositionAlignment, Size);
+        protected Rectangle ActualDestinationRectangle => ControlHelper.DetermineArea(Position.ToVector2(), PositionAlignment, Size);
         public int Top => ActualDestinationRectangle.Top;
         public int Bottom => ActualDestinationRectangle.Bottom;
         public int Left => ActualDestinationRectangle.Left;
@@ -83,7 +78,7 @@ namespace Zen.GuiControls
         public int Width => ActualDestinationRectangle.Width;
         public int Height => ActualDestinationRectangle.Height;
 
-        public Rectangle Area => ActualDestinationRectangle; // TODO
+        public Rectangle Area => ActualDestinationRectangle;
 
         public PointI RelativeTopLeft => new PointI(Left - (Parent?.Left ?? 0), Top - (Parent?.Top ?? 0));
         public PointI RelativeTopRight => new PointI(RelativeTopLeft.X + Width, RelativeTopLeft.Y);
@@ -93,6 +88,46 @@ namespace Zen.GuiControls
         public IControl this[int index] => ChildControls[index];
         public IControl this[string key] => ChildControls.FindControl(key);
         #endregion
+
+        protected Control(Control other)
+        {
+            Name = other.Name;
+            ChildControls = other.ChildControls;
+            Packages = other.Packages;
+            Owner = other.Owner;
+            Parent = other.Parent;
+            Position = other.Position;
+            PositionAlignment = other.PositionAlignment;
+            Size = other.Size;
+            Color = other.Color;
+            BackgroundColor = other.BackgroundColor;
+            BorderColor = other.BorderColor;
+            Status = other.Status;
+            Enabled = other.Enabled;
+            Visible = other.Visible;
+            LayerDepth = other.LayerDepth;
+        }
+
+        protected Control(string name)
+        {
+            Name = name;
+
+            LayerDepth = 0.0f;
+            Position = PointI.Empty;
+            PositionAlignment = Alignment.TopLeft;
+            Size = PointI.Zero;
+            Color = Color.White;
+            BackgroundColor = Color.Transparent;
+            BorderColor = Color.Transparent;
+            Status = ControlStatus.None;
+            Enabled = true;
+            Visible = true;
+
+            ChildControls = new Controls();
+            Packages = new Packages();
+        }
+
+        public abstract IControl Clone();
 
         /// <summary>
         /// Adds packages to this control.
@@ -212,36 +247,22 @@ namespace Zen.GuiControls
 
             childControl.Parent = this;
 
-            var topLeft = ControlHelper.DetermineTopLeft(childControl, parentAlignment, childAlignment, offset, Position, PositionAlignment, Size);
+            var topLeft = ControlHelper.DetermineTopLeft(childControl, parentAlignment, childAlignment, offset, Position.ToVector2(), PositionAlignment, Size);
 
-            childControl.SetPosition(topLeft);
+            childControl.Position = topLeft;
             childControl.PositionAlignment = Alignment.TopLeft;
             ChildControls.Add(childControl.Name, childControl);
         }
 
-        public virtual PointI GetPosition()
-        {
-            return Position.ToPointI();
-        }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="point"></param>
-        public virtual void SetPosition(PointI point)
-        {
-            ChildControls.SetTopLeftPosition(point);
-            Position = point.ToVector2();
-        }
-
-        /// <summary>
-        /// 
+        /// Change position relative to current position.
         /// </summary>
         /// <param name="point"></param>
         public void MovePosition(PointI point)
         {
             ChildControls.MoveTopLeftPosition(point);
-            Position = new Vector2(Position.X + point.X, Position.Y + point.Y);
+            Position += point;
         }
 
         /// <summary>
@@ -290,7 +311,15 @@ namespace Zen.GuiControls
         {
             if (Visible)
             {
+                spriteBatch.FillRectangle(ActualDestinationRectangle, BackgroundColor, LayerDepth);
+
                 InDraw(spriteBatch);
+
+                spriteBatch.DrawRectangle(
+                    new Rectangle(ActualDestinationRectangle.X, ActualDestinationRectangle.Y, ActualDestinationRectangle.Width - 1, ActualDestinationRectangle.Height - 1),
+                    BorderColor,
+                    1.0f,
+                    LayerDepth);
             }
 
             ChildControls.Draw(spriteBatch);

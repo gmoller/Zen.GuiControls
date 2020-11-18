@@ -4,7 +4,7 @@ using Zen.Input;
 
 namespace Zen.GuiControls
 {
-    internal class Packages : IEnumerable<IPackage>
+    public class Packages : IEnumerable<IPackage>
     {
         private List<IPackage> PackagesList { get; }
 

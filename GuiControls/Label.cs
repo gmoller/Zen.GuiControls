@@ -5,7 +5,6 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Zen.Assets;
 using Zen.Input;
-using Zen.MonoGameUtilities;
 
 namespace Zen.GuiControls
 {
@@ -16,66 +15,41 @@ namespace Zen.GuiControls
         public Alignment ContentAlignment { get; set; }
         public string Text { get; set; }
         public Func<object, string> GetTextFunc { get; set; }
-        public Color TextColor { get; set; }
-        public Color? TextShadowColor { get; set; }
-        public Color? BackgroundColor { get; set; }
-        public Color? BorderColor { get; set; }
+        public Color TextShadowColor { get; set; }
         public float Scale { get; set; }
-
         public string FontName { get; set; }
-        private SpriteFont Font { get; set; }
         #endregion
 
         /// <summary>
         /// An awesome little label.
         /// </summary>
         /// <param name="name">Name of control.</param>
-        /// <param name="fontName">Font to use for label text.</param>
-        public Label(
-            string name,
-            string fontName) : 
-            base(name)
+        public Label(string name) : base(name)
         {
             ContentAlignment = Alignment.TopLeft;
             Text = string.Empty;
-            TextColor = Color.White;
-            TextShadowColor = null;
-            BackgroundColor = null;
-            BorderColor = null;
+            TextShadowColor = Color.Transparent;
             Scale = 1.0f;
-            FontName = fontName;
+            FontName = string.Empty;
         }
 
-        public Label Clone()
+        private Label(Label other) : base(other)
         {
-            var clone = new Label(Name, FontName);
+            ContentAlignment = other.ContentAlignment;
+            Text = other.Text;
+            GetTextFunc = other.GetTextFunc;
+            TextShadowColor = other.TextShadowColor;
+            Scale = other.Scale;
+            FontName = other.FontName;
+        }
 
-            clone.ContentAlignment = ContentAlignment;
-            clone.Text = Text;
-            clone.GetTextFunc = GetTextFunc;
-            clone.TextColor = TextColor;
-            clone.TextShadowColor = TextShadowColor;
-            clone.BackgroundColor = BackgroundColor;
-            clone.BorderColor = BorderColor;
-            clone.Scale = Scale;
-            clone.Font = Font;
-
-            clone.Status = Status;
-            clone.Enabled = Enabled;
-            clone.PositionAlignment = PositionAlignment;
-            clone.SetPosition(GetPosition());
-            clone.Size = Size;
-            clone.Owner = Owner;
-            clone.Parent = Parent;
-            clone.LayerDepth = LayerDepth;
-
-            return clone;
+        public override IControl Clone()
+        {
+            return new Label(this);
         }
 
         public override void LoadContent(ContentManager content, bool loadChildrenContent = false)
         {
-            Font = AssetsManager.Instance.GetSpriteFont(FontName);
-
             if (loadChildrenContent)
             {
                 ChildControls.LoadContent(content, true);
@@ -94,51 +68,30 @@ namespace Zen.GuiControls
 
         protected override void InDraw(SpriteBatch spriteBatch)
         {
-            if (BackgroundColor != null)
-            {
-                spriteBatch.FillRectangle(
-                    ActualDestinationRectangle,
-                    BackgroundColor.Value, 
-                    LayerDepth);
-            }
+            var font = AssetsManager.Instance.GetSpriteFont(FontName);
 
-            var offset = DetermineOffset(Font, new Vector2(Size.X, Size.Y), Text, Scale);
-            if (TextShadowColor != null)
-            {
-                spriteBatch.DrawString(
-                    Font, 
-                    Text,
-                    new Vector2(TopLeft.X, TopLeft.Y) + offset + Vector2.One, 
-                    TextShadowColor.Value, 
-                    0.0f, 
-                    Vector2.Zero,
-                    Scale, 
-                    SpriteEffects.None, 
-                    LayerDepth);
-            }
-
-            if (BorderColor != null)
-            {
-                spriteBatch.DrawRectangle(
-                    new Rectangle(
-                        ActualDestinationRectangle.X,
-                        ActualDestinationRectangle.Y,
-                        ActualDestinationRectangle.Width - 1,
-                        ActualDestinationRectangle.Height - 1),
-                    BorderColor.Value,
-                    1.0f,
-                    LayerDepth);
-            }
+            var offset = DetermineOffset(font, new Vector2(Size.X, Size.Y), Text, Scale);
 
             spriteBatch.DrawString(
-                Font, 
+                font, 
                 Text,
-                new Vector2(TopLeft.X, TopLeft.Y) + offset, 
-                TextColor, 
+                new Vector2(TopLeft.X, TopLeft.Y) + offset + Vector2.One, 
+                TextShadowColor, 
                 0.0f, 
                 Vector2.Zero,
                 Scale, 
                 SpriteEffects.None, 
+                LayerDepth);
+
+            spriteBatch.DrawString(
+                font,
+                Text,
+                new Vector2(TopLeft.X, TopLeft.Y) + offset,
+                Color,
+                0.0f,
+                Vector2.Zero,
+                Scale,
+                SpriteEffects.None,
                 LayerDepth);
         }
 

@@ -112,7 +112,7 @@ namespace Zen.GuiControls
             return value;
         }
 
-        public Color? GetAsColor(string propertyName, Color? dflt)
+        public Color GetAsColor(string propertyName, Color dflt)
         {
             var valueAsString = GetString(propertyName);
             if (!valueAsString.HasValue()) return dflt;

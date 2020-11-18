@@ -51,7 +51,7 @@ namespace Zen.GuiControls
         {
             foreach (var child in ChildControlsList.Values)
             {
-                child.SetPosition(point + child.RelativeTopLeft);
+                child.Position = point + child.RelativeTopLeft;
             }
         }
 

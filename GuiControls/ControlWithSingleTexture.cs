@@ -1,83 +1,59 @@
 ﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Zen.Assets;
-using Zen.Assets.ExtensionMethods;
 using Zen.Utilities.ExtensionMethods;
 
 namespace Zen.GuiControls
 {
-    public abstract class ControlWithSingleTexture : Control
+    public class ControlWithSingleTexture : Control
     {
         #region State
-        private string _textureName;
-        public string TextureAtlas { get; private set; }
-
-        public Color Color { get; set; }
-
-        protected AtlasSpec2 Atlas { get; private set; }
-        protected Texture2D Texture { get; set; }
-        protected Rectangle SourceRectangle { get; private set; }
+        public string TextureName { get; set; }
         #endregion
 
-        protected ControlWithSingleTexture(string name, string textureName)
-            : base(name)
+        protected ControlWithSingleTexture(string name) : base(name)
         {
-            if (textureName.HasValue())
-            {
-                TextureName = textureName;
-            }
-
-            Color = Color.White;
         }
 
-        public string TextureName
+        protected ControlWithSingleTexture(ControlWithSingleTexture other) : base(other)
         {
-            get => _textureName;
-            set
-            {
-                TextureAtlas = ControlHelper.GetTextureAtlas(value);
-                _textureName = ControlHelper.GetTextureName(value);
-            }
+            TextureName = other.TextureName;
         }
 
-        public override void LoadContent(ContentManager content, bool loadChildrenContent = false)
+        public override IControl Clone()
         {
-            if (TextureAtlas.HasValue())
+            return new ControlWithSingleTexture(this);
+        }
+
+        protected virtual void InDraw(SpriteBatch spriteBatch, Texture2D texture, Rectangle sourceRectangle)
+        {
+        }
+
+        protected override void InDraw(SpriteBatch spriteBatch)
+        {
+            Rectangle sourceRectangle;
+            Texture2D texture;
+            var textureAtlas = ControlHelper.GetTextureAtlas(TextureName);
+            if (textureAtlas.HasValue())
             {
-                Atlas = AssetsManager.Instance.GetAtlas(TextureAtlas);
-                Texture = AssetsManager.Instance.GetTexture(TextureAtlas);
-                SourceRectangle = Atlas.Frames[TextureName].ToRectangle();
+                var atlas = AssetsManager.Instance.GetAtlas(textureAtlas);
+                texture = AssetsManager.Instance.GetTexture(textureAtlas);
+                var textureName = ControlHelper.GetTextureName(TextureName);
+                var f = atlas.Frames[textureName];
+                sourceRectangle = new Rectangle(f.X, f.Y, f.Width, f.Height);
             }
-            else // no atlas
+            else
             {
-                SetTexture(TextureName);
+                texture = AssetsManager.Instance.GetTexture(TextureName);
+                sourceRectangle = texture.Bounds;
             }
 
-            base.LoadContent(content, loadChildrenContent);
+            InDraw(spriteBatch, texture, sourceRectangle);
         }
 
         protected void SetTexture(string textureName)
         {
-            if (Atlas.HasValue())
-            {
-                var f = Atlas.Frames[textureName];
-                SourceRectangle = new Rectangle(f.X, f.Y, f.Width, f.Height);
-            }
-            else
-            {
-                if (textureName.HasValue())
-                {
-                    Texture = AssetsManager.Instance.GetTexture(textureName);
-                    SourceRectangle = Texture.Bounds;
-                }
-            }
-        }
-
-        public void SetTexture(Texture2D texture)
-        {
-            Texture = texture;
-            SourceRectangle = Texture.Bounds;
+            TextureName = textureName;
         }
     }
 }

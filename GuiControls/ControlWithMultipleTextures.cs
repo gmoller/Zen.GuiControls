@@ -1,84 +1,47 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using Zen.Assets.ExtensionMethods;
+﻿using System.Collections.Generic;
+using Microsoft.Xna.Framework.Graphics;
 using Zen.Input;
-using Zen.Utilities.ExtensionMethods;
 
 namespace Zen.GuiControls
 {
-    public abstract class ControlWithMultipleTextures : ControlWithSingleTexture
+    public class ControlWithMultipleTextures : ControlWithSingleTexture
     {
-        private string _textureNormal;
-        private string _textureActive;
-        private string _textureHover;
-        private string _textureDisabled;
-
         #region State
-
-        public string TextureNormal
-        {
-            get => _textureNormal;
-            set => _textureNormal = value.HasValue() ? value.KeepOnlyAfterCharacter('.') : TextureName;
-        }
-
-        public string TextureActive
-        {
-            get => _textureActive;
-            set => _textureActive = value.HasValue() ? value.KeepOnlyAfterCharacter('.') : TextureName;
-        }
-
-        public string TextureHover
-        {
-            get => _textureHover;
-            set => _textureHover = value.HasValue() ? value.KeepOnlyAfterCharacter('.') : TextureName;
-        }
-
-        public string TextureDisabled
-        {
-            get => _textureDisabled;
-            set => _textureDisabled = value.HasValue() ? value.KeepOnlyAfterCharacter('.') : TextureName;
-        }
-
+        public Dictionary<string, string> TextureStrings { get; }
+        public Dictionary<string, string> Dictionary { get; set; }
         #endregion
 
-        protected ControlWithMultipleTextures(string name, string textureName, string textureNormal, string textureActive, string textureHover, string textureDisabled)
-            : base(name, textureName)
+        protected ControlWithMultipleTextures(string name) : base(name)
         {
-            TextureNormal = textureNormal;
-            TextureActive = textureActive;
-            TextureHover = textureHover;
-            TextureDisabled = textureDisabled;
+            TextureStrings = new Dictionary<string, string>();
+        }
+
+        protected ControlWithMultipleTextures(ControlWithMultipleTextures other) : base(other)
+        {
+            TextureStrings = other.TextureStrings;
+            Dictionary = other.Dictionary;
+        }
+
+        public override IControl Clone()
+        {
+            return new ControlWithMultipleTextures(this);
+        }
+
+        public void AddTexture(string textureName, string textureString)
+        {
+            // up-sert
+            TextureStrings[textureName] = textureString;
         }
 
         public override void Update(InputHandler input, float deltaTime, Viewport? viewport = null)
         {
             base.Update(input, deltaTime, viewport);
 
-            if (Status == ControlStatus.Active)
-            {
-                SetTexture(TextureActive);
-                return;
-            }
+            var key = $"{Status}-{Enabled}";
+            var textureLookup = Dictionary[key];
+            var textureName = TextureStrings[textureLookup];
 
-            string texture;
-            if (Enabled)
-            {
-                if (Status == ControlStatus.MouseOver)
-                {
-                    //if (Atlas.IsNull() && !TextureHover.HasValue()) throw new Exception("_textureHover is empty!");
-                    texture = Atlas.HasValue() ? (TextureHover.HasValue() ? TextureHover : TextureName) : TextureHover;
-                }
-                else
-                {
-                    //if (Atlas.IsNull() && !TextureNormal.HasValue()) throw new Exception("_textureNormal is empty!");
-                    texture = Atlas.HasValue() ? (TextureNormal.HasValue() ? TextureNormal : TextureName) : TextureNormal;
-                }
-            }
-            else
-            {
-                //if (Atlas.IsNull() && !TextureDisabled.HasValue()) throw new Exception("_textureDisabled is empty!");
-                texture = Atlas.HasValue() ? (TextureDisabled.HasValue() ? TextureDisabled : TextureName) : TextureDisabled;
-            }
-            SetTexture(texture);
+            SetTexture(textureName);
         }
     }
 }

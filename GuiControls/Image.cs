@@ -12,35 +12,24 @@ namespace Zen.GuiControls
         /// An amazing little image.
         /// </summary>
         /// <param name="name">Name of control.</param>
-        /// <param name="textureName">Texture to use for control.</param>
-        public Image(
-            string name,
-            string textureName = "") :
-            base(name, textureName)
+        public Image(string name) : base(name)
         {
         }
 
-        public Image Clone()
+        private Image(Image other) : base(other)
         {
-            var clone = new Image(Name, TextureName);
-
-            clone.Status = Status;
-            clone.Enabled = Enabled;
-            clone.PositionAlignment = PositionAlignment;
-            clone.SetPosition(GetPosition());
-            clone.Size = Size;
-            clone.Owner = Owner;
-            clone.Parent = Parent;
-            clone.LayerDepth = LayerDepth;
-
-            return clone;
         }
 
-        protected override void InDraw(SpriteBatch spriteBatch)
+        public override IControl Clone()
         {
-            if (Texture.HasValue())
+            return new Image(this);
+        }
+
+        protected override void InDraw(SpriteBatch spriteBatch, Texture2D texture, Rectangle sourceRectangle)
+        {
+            if (texture.HasValue())
             {
-                spriteBatch.Draw(Texture, ActualDestinationRectangle, SourceRectangle, Color, 0.0f, Vector2.Zero, SpriteEffects.None, LayerDepth);
+                spriteBatch.Draw(texture, ActualDestinationRectangle, sourceRectangle, Color, 0.0f, Vector2.Zero, SpriteEffects.None, LayerDepth);
             }
         }
     }
