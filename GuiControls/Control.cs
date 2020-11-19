@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
-using Zen.Assets;
 using Zen.Input;
 using Zen.MonoGameUtilities;
 using Zen.MonoGameUtilities.ExtensionMethods;

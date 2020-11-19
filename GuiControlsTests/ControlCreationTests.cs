@@ -22,10 +22,7 @@ frmTest : Frame
   TextureName: 'GUI_Textures_1.frame_texture'
   Position: [1680;0]
   Size: [100;100]
-  TopPadding: 5
-  BottomPadding: 5
-  LeftPadding: 5
-  RightPadding: 5
+  BorderSize: 5
 }";
             var controls = ControlCreator.CreateFromSpecification(spec);
             controls.SetOwner(this);
@@ -45,7 +42,7 @@ frmTest : Frame
             Assert.AreEqual(new PointI(1780, 100), ctrl1.BottomRight);
 
             var frame1 = (Frame)ctrl1;
-            Assert.AreEqual("GUI_Textures_1.frame_texture", frame1.TextureName);
+            Assert.AreEqual("GUI_Textures_1.frame_texture", frame1.TextureStrings["TextureName"]);
         }
 
         [Test]
@@ -57,10 +54,10 @@ frmTest : Frame
   TextureName: 'GUI_Textures_1.frame_texture'
   Position: %position1%
   Size: [100;100]
-  TopPadding: 5
-  BottomPadding: 5
-  LeftPadding: 5
-  RightPadding: 5
+  BorderSizeTop: 5
+  BorderSizeBottom: 5
+  BorderSizeLeft: 5
+  BorderSizeRight: 5
 
   Contains: [lblTest]
 }

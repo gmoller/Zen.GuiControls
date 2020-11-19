@@ -57,8 +57,8 @@ slrTest : Slider
 
             var slider1 = (Slider)ctrl1;
             Assert.AreEqual(new PointI(5, 5), slider1.GripSize);
-            Assert.AreEqual("GUI_Textures_1.texture1", slider1.TextureName);
-            Assert.AreEqual("GUI_Textures_1.texture2", slider1.TextureGrip);
+            Assert.AreEqual("GUI_Textures_1.texture1", slider1.TextureStrings["TextureName"]);
+            Assert.AreEqual("GUI_Textures_1.texture2", slider1.TextureStrings["TextureGrip"]);
             Assert.AreEqual(0, slider1.MinimumValue);
             Assert.AreEqual(100, slider1.MaximumValue);
             Assert.AreEqual(0, slider1.CurrentValue);

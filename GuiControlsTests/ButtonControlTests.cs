@@ -26,7 +26,7 @@ btnTest : Button
   Enabled: false
   Visible: false
   LayerDepth: 0.1
-  TextureName: 'GUI_Textures_1.texture1'
+  //TextureName: 'GUI_Textures_1.texture1'
   TextureActive: 'GUI_Textures_1.active'
   TextureHover: 'GUI_Textures_1.hover'
   TextureNormal: 'GUI_Textures_1.normal'
@@ -50,7 +50,7 @@ btnTest : Button
             Assert.AreEqual(0.1f, ctrl1.LayerDepth);
 
             var button1 = (Button)ctrl1;
-            Assert.AreEqual("GUI_Textures_1.texture1", button1.TextureName);
+            //Assert.AreEqual("GUI_Textures_1.texture1", button1.TextureStrings["TextureName"]);
             Assert.AreEqual("GUI_Textures_1.active", button1.TextureStrings["TextureActive"]);
             Assert.AreEqual("GUI_Textures_1.hover", button1.TextureStrings["TextureHover"]);
             Assert.AreEqual("GUI_Textures_1.normal", button1.TextureStrings["TextureNormal"]);

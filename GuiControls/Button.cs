@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -13,6 +14,15 @@ namespace Zen.GuiControls
         /// <param name="name">Name of control.</param>
         public Button(string name) : base(name)
         {
+            TextureStringPicker = new Dictionary<string, string>
+            {
+                {"Active-True", "TextureActive"},
+                {"Active-False", "TextureActive"},
+                {"MouseOver-True", "TextureHover"},
+                {"MouseOver-False", "TextureDisabled"},
+                {"None-True", "TextureNormal"},
+                {"None-False", "TextureDisabled"}
+            };
         }
 
         private Button(Button other) : base(other)

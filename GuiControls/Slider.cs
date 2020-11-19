@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -9,11 +10,10 @@ using Zen.Utilities.ExtensionMethods;
 namespace Zen.GuiControls
 {
     [DebuggerDisplay("{" + nameof(DebuggerDisplay) + ",nq}")]
-    public class Slider : ControlWithSingleTexture
+    public class Slider : ControlWithMultipleTextures
     {
         #region State
         public PointI GripSize { get; set; }
-        public string TextureGrip { get; set; }
         public int MinimumValue { get; set; }
         public int MaximumValue { get; set; }
         
@@ -31,12 +31,20 @@ namespace Zen.GuiControls
         /// <param name="name">Name of control.</param>
         public Slider(string name) : base(name)
         {
+            TextureStringPicker = new Dictionary<string, string>
+            {
+                {"Active-True", "TextureName"},
+                {"Active-False", "TextureName"},
+                {"MouseOver-True", "TextureName"},
+                {"MouseOver-False", "TextureName"},
+                {"None-True", "TextureName"},
+                {"None-False", "TextureName"}
+            };
         }
 
         private Slider(Slider other) : base(other)
         {
             GripSize = other.GripSize;
-            TextureGrip = other.TextureGrip;
             MinimumValue = other.MinimumValue;
             MaximumValue = other.MaximumValue;
             CurrentValue = other.CurrentValue;
@@ -51,38 +59,12 @@ namespace Zen.GuiControls
         {
             spriteBatch.Draw(texture, ActualDestinationRectangle, sourceRectangle, Color, 0.0f, Vector2.Zero, SpriteEffects.None, LayerDepth);
 
-            var textureGrip = GetTexture2D(TextureGrip);
-            var rectangle = GetSourceRectangle(textureGrip, TextureGrip);
+            var textureGripString = TextureStrings["TextureGrip"];
+            var textureGrip = GetTexture2D(textureGripString);
+            var rectangle = GetSourceRectangle(textureGrip, textureGripString);
             var destination = GetDestination(GripSize, CurrentValue, MinimumValue, MaximumValue, ActualDestinationRectangle);
 
             spriteBatch.Draw(textureGrip, destination, rectangle, Color, 0.0f, Vector2.Zero, SpriteEffects.None, LayerDepth);
-        }
-
-        private static Rectangle GetSourceRectangle(Texture2D texture, string textureName)
-        {
-            Rectangle rectangle;
-            var textureAtlas = ControlHelper.GetTextureAtlas(textureName);
-            if (textureAtlas.HasValue())
-            {
-                var atlas = AssetsManager.Instance.GetAtlas(textureAtlas);
-                var textureName2 = ControlHelper.GetTextureName(textureName);
-                var f = atlas.Frames[textureName2];
-                rectangle = new Rectangle(f.X, f.Y, f.Width, f.Height);
-            }
-            else
-            {
-                rectangle = texture.Bounds;
-            }
-
-            return rectangle;
-        }
-
-        private static Texture2D GetTexture2D(string textureName)
-        {
-            var textureAtlas = ControlHelper.GetTextureAtlas(textureName);
-            var texture = AssetsManager.Instance.GetTexture(textureAtlas.HasValue() ? textureAtlas : textureName);
-
-            return texture;
         }
 
         private static Rectangle GetDestination(PointI size, int current, int minimum, int maximum, Rectangle actualDestinationRectangle)

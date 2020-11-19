@@ -256,17 +256,6 @@ namespace Zen.GuiControls
         {
             control = (Button)UpdateGenericProperties(control, state);
 
-            control.TextureName = state.GetAsString("TextureName", string.Empty);
-
-            control.Dictionary = new Dictionary<string, string>
-            {
-                {"Active-True", "TextureActive"},
-                {"Active-False", "TextureActive"},
-                {"MouseOver-True", "TextureHover"},
-                {"None-True", "TextureNormal"},
-                {"None-False", "TextureDisabled"},
-                {"MouseOver-False", "TextureDisabled"}
-            };
             control.AddTexture("TextureActive", state.GetAsString("TextureActive", string.Empty));
             control.AddTexture("TextureHover", state.GetAsString("TextureHover", string.Empty));
             control.AddTexture("TextureNormal", state.GetAsString("TextureNormal", string.Empty));
@@ -294,11 +283,15 @@ namespace Zen.GuiControls
         {
             control = (Frame)UpdateGenericProperties(control, state);
 
-            control.TextureName = state.GetAsString("TextureName", string.Empty);
-            control.TopPadding = state.GetAsInt32("TopPadding", control.TopPadding);
-            control.BottomPadding = state.GetAsInt32("BottomPadding", control.BottomPadding);
-            control.LeftPadding = state.GetAsInt32("LeftPadding", control.LeftPadding);
-            control.RightPadding = state.GetAsInt32("RightPadding", control.RightPadding);
+            control.AddTexture("TextureName", state.GetAsString("TextureName", string.Empty));
+            control.BorderSizeTop = state.GetAsInt32("BorderSize", control.BorderSizeTop);
+            control.BorderSizeBottom = state.GetAsInt32("BorderSize", control.BorderSizeBottom);
+            control.BorderSizeLeft = state.GetAsInt32("BorderSize", control.BorderSizeLeft);
+            control.BorderSizeRight = state.GetAsInt32("BorderSize", control.BorderSizeRight);
+            control.BorderSizeTop = state.GetAsInt32("BorderSizeTop", control.BorderSizeTop);
+            control.BorderSizeBottom = state.GetAsInt32("BorderSizeBottom", control.BorderSizeBottom);
+            control.BorderSizeLeft = state.GetAsInt32("BorderSizeLeft", control.BorderSizeLeft);
+            control.BorderSizeRight = state.GetAsInt32("BorderSizeRight", control.BorderSizeRight);
 
             return control;
         }
@@ -322,7 +315,7 @@ namespace Zen.GuiControls
         {
             control = (Image)UpdateGenericProperties(control, state);
 
-            control.TextureName = state.GetAsString("TextureName", string.Empty);
+            control.AddTexture("TextureName", state.GetAsString("TextureName", string.Empty));
 
             return control;
         }
@@ -347,8 +340,8 @@ namespace Zen.GuiControls
             control = (Slider)UpdateGenericProperties(control, state);
 
             control.GripSize = state.GetAsPointI("GripSize", PointI.Empty);
-            control.TextureName = state.GetAsString("TextureName", string.Empty);
-            control.TextureGrip = state.GetAsString("TextureGrip", string.Empty);
+            control.AddTexture("TextureName", state.GetAsString("TextureName", string.Empty));
+            control.AddTexture("TextureGrip", state.GetAsString("TextureGrip", string.Empty));
             control.MinimumValue = state.GetAsInt32("MinimumValue", 0);
             control.MaximumValue = state.GetAsInt32("MaximumValue", 0);
             control.CurrentValue = state.GetAsInt32("CurrentValue", 0);
