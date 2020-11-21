@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Diagnostics;
 using Microsoft.Xna.Framework;
 
 namespace Zen.GuiControls
 {
+    [DebuggerDisplay("{" + nameof(DebuggerDisplay) + ",nq}")]
     public readonly struct Texture
     {
         public string TextureString { get; }
@@ -15,5 +17,12 @@ namespace Zen.GuiControls
             IsValid = isValid;
             DestinationRectangle = destinationRectangle;
         }
+
+        public override string ToString()
+        {
+            return DebuggerDisplay;
+        }
+
+        public string DebuggerDisplay => $"{{TextureString={TextureString}}}";
     }
 }

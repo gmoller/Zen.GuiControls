@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Zen.GuiControls.PackagesClasses;
 using Zen.Input;
+using Zen.MonoGameUtilities.ExtensionMethods;
 using Zen.Utilities;
 
 namespace Zen.GuiControls
@@ -69,6 +71,8 @@ namespace Zen.GuiControls
             get => _currentValue;
             set => _currentValue = Math.Clamp(value, MinimumValue, MaximumValue);
         }
+
+        public List<PointI> SlidePath { get; set; }
         #endregion
 
         /// <summary>
@@ -82,10 +86,14 @@ namespace Zen.GuiControls
 
         private Slider(Slider other) : base(other)
         {
+            TextureName = other.TextureName;
+            TextureGripNormal = other.TextureGripNormal;
+            TextureGripHover = other.TextureGripHover;
             GripSize = other.GripSize;
             MinimumValue = other.MinimumValue;
             MaximumValue = other.MaximumValue;
             CurrentValue = other.CurrentValue;
+            SlidePath = other.SlidePath;
         }
 
         public override IControl Clone()
@@ -101,10 +109,8 @@ namespace Zen.GuiControls
         private Rectangle GetDestination()
         {
             var ratio = CurrentValue / (float)(MinimumValue + MaximumValue);
-            var x = Bounds.X + Bounds.Width * ratio - GripSize.X * 0.5f;
-            var y = (Bounds.Top + Bounds.Bottom) * 0.5f - GripSize.Y * 0.5f;
-
-            var rectangle = new Rectangle((int)x, (int)y, GripSize.X, GripSize.Y);
+            var p = Bounds.Location.ToPointI() + PointI.Lerp(SlidePath[0], SlidePath[1], ratio);
+            var rectangle = new Rectangle((int)(p.X - GripSize.X * 0.5f), (int)(p.Y - GripSize.Y * 0.5f), GripSize.X, GripSize.Y);
 
             return rectangle;
         }
@@ -114,10 +120,12 @@ namespace Zen.GuiControls
             var slr = (Slider)sender;
             var mouseEventArgs = (MouseEventArgs)args;
 
-            var x = (float)mouseEventArgs.Mouse.Location.X; // - slr.GripSize.X * 0.5f;
+            var x = (float)mouseEventArgs.Mouse.Location.X;
+            //var y = (float)mouseEventArgs.Mouse.Location.Y;
 
-            var ratio = (x - slr.Bounds.X) / (slr.Bounds.X + slr.Bounds.Width);
-            var currentValue = ratio * (slr.MinimumValue + slr.MaximumValue);
+            var ratioX = (x - slr.SlidePath[0].X) / (slr.SlidePath[1].X - slr.SlidePath[0].X);
+            //var ratioY = (y - slr.SlidePath[0].Y) / (slr.SlidePath[1].Y - slr.SlidePath[0].Y); // divide by zero!
+            var currentValue = ratioX * (slr.MinimumValue + slr.MaximumValue);
 
             slr.CurrentValue = (int)currentValue;
         }

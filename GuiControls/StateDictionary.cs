@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Zen.Utilities;
 using Zen.Utilities.ExtensionMethods;
 
 namespace Zen.GuiControls
 {
+    [DebuggerDisplay("{" + nameof(DebuggerDisplay) + ",nq}")]
     public class StateDictionary
     {
         private readonly Dictionary<string, string> _dictionary;
@@ -137,19 +139,45 @@ namespace Zen.GuiControls
             var valueAsString = GetString(propertyName);
             if (!valueAsString.HasValue()) return new List<string>();
 
-            var containsList = new List<string>();
+            var listOfStrings = new List<string>();
             try
             {
-                var cont = valueAsString.RemoveFirstAndLastCharacters();
-                var contains = cont.Split(';');
-                containsList.AddRange(contains);
+                var valueAsString2 = valueAsString.RemoveFirstAndLastCharacters();
+                var str = valueAsString2.Split(';');
+                listOfStrings.AddRange(str);
             }
             catch (Exception e)
             {
-                throw new Exception($"Failed to get contains for [{valueAsString}].", e);
+                throw new Exception($"Failed to convert [{valueAsString}] for [{propertyName}] to List<string>.", e);
             }
 
-            return containsList;
+            return listOfStrings;
+        }
+
+        public List<PointI> GetAsListOfPointI(string propertyName, List<PointI> dflt)
+        {
+            var valueAsString = GetString(propertyName);
+            if (!valueAsString.HasValue()) return dflt;
+
+            var listOfPointI = new List<PointI>();
+            try
+            {
+                var valueAsString2 = valueAsString.RemoveFirstAndLastCharacters();
+                var str = valueAsString2.Split("];[");
+                foreach (var s in str)
+                {
+                    var s2 = s.KeepOnlyAfterCharacter('[');
+                    var s3 = s2.KeepOnlyBeforeCharacter(']');
+                    var p = new PointI(s);
+                    listOfPointI.Add(p);
+                }
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Failed to convert [{valueAsString}] for [{propertyName}] to List<PointI>.", e);
+            }
+
+            return listOfPointI;
         }
 
         private string GetString(string propertyName)
@@ -267,5 +295,12 @@ namespace Zen.GuiControls
                 throw new Exception($"Failed to convert [{getTextFuncAsString}] for property [{propertyName}] to Func.", e);
             }
         }
+
+        public override string ToString()
+        {
+            return DebuggerDisplay;
+        }
+
+        public string DebuggerDisplay => $"{{Count={_dictionary.Count}}}";
     }
 }
