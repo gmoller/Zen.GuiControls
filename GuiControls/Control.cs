@@ -57,6 +57,7 @@ namespace Zen.GuiControls
         public float LayerDepth { get; set; }
 
         public ControlStatus Status { get; set; }
+        protected InputHandler Input { get; private set; }
 
         public Controls ChildControls { get; }
 
@@ -64,20 +65,18 @@ namespace Zen.GuiControls
         #endregion
 
         #region Accessors
-        protected Rectangle ActualDestinationRectangle => ControlHelper.DetermineArea(Position.ToVector2(), PositionAlignment, Size);
-        public int Top => ActualDestinationRectangle.Top;
-        public int Bottom => ActualDestinationRectangle.Bottom;
-        public int Left => ActualDestinationRectangle.Left;
-        public int Right => ActualDestinationRectangle.Right;
-        public PointI Center => new PointI(ActualDestinationRectangle.Center.X, ActualDestinationRectangle.Center.Y);
+        public Rectangle Bounds => ControlHelper.DetermineArea(Position.ToVector2(), PositionAlignment, Size);
+        public int Top => Bounds.Top;
+        public int Bottom => Bounds.Bottom;
+        public int Left => Bounds.Left;
+        public int Right => Bounds.Right;
+        public PointI Center => new PointI(Bounds.Center.X, Bounds.Center.Y);
         public PointI TopLeft => new PointI(Left, Top);
         public PointI TopRight => new PointI(Right, Top);
         public PointI BottomLeft => new PointI(Left, Bottom);
         public PointI BottomRight => new PointI(Right, Bottom);
-        public int Width => ActualDestinationRectangle.Width;
-        public int Height => ActualDestinationRectangle.Height;
-
-        public Rectangle Area => ActualDestinationRectangle;
+        public int Width => Bounds.Width;
+        public int Height => Bounds.Height;
 
         public PointI RelativeTopLeft => new PointI(Left - (Parent?.Left ?? 0), Top - (Parent?.Top ?? 0));
         public PointI RelativeTopRight => new PointI(RelativeTopLeft.X + Width, RelativeTopLeft.Y);
@@ -279,6 +278,8 @@ namespace Zen.GuiControls
 
         public virtual void Update(InputHandler input, float deltaTime, Viewport? viewport = null)
         {
+            Input = input;
+
             if (!Enabled)
             {
                 Packages.Reset();
@@ -288,8 +289,8 @@ namespace Zen.GuiControls
 
             Status = Status switch
             {
-                ControlStatus.None when ControlHelper.IsMouseOverControl(ActualDestinationRectangle, input.MousePosition, viewport) => ControlStatus.MouseOver,
-                ControlStatus.MouseOver when !ControlHelper.IsMouseOverControl(ActualDestinationRectangle, input.MousePosition, viewport) => ControlStatus.None,
+                ControlStatus.None when ControlHelper.IsMouseOverControl(Bounds, input.MousePosition, viewport) => ControlStatus.MouseOver,
+                ControlStatus.MouseOver when !ControlHelper.IsMouseOverControl(Bounds, input.MousePosition, viewport) => ControlStatus.None,
                 _ => Status
             };
 
@@ -310,12 +311,12 @@ namespace Zen.GuiControls
         {
             if (Visible)
             {
-                spriteBatch.FillRectangle(ActualDestinationRectangle, BackgroundColor, LayerDepth);
+                spriteBatch.FillRectangle(Bounds, BackgroundColor, LayerDepth);
 
                 InDraw(spriteBatch);
 
                 spriteBatch.DrawRectangle(
-                    new Rectangle(ActualDestinationRectangle.X, ActualDestinationRectangle.Y, ActualDestinationRectangle.Width - 1, ActualDestinationRectangle.Height - 1),
+                    new Rectangle(Bounds.X, Bounds.Y, Bounds.Width - 1, Bounds.Height - 1),
                     BorderColor,
                     1.0f,
                     LayerDepth);

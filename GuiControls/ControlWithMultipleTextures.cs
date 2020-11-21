@@ -9,20 +9,18 @@ namespace Zen.GuiControls
     public class ControlWithMultipleTextures : Control
     {
         #region State
-        public Dictionary<string, string> TextureStrings { get; }
-        protected Dictionary<string, string> TextureStringPicker { get; set; }
+
+        private Dictionary<string, Texture> Textures { get; }
         #endregion
 
         protected ControlWithMultipleTextures(string name) : base(name)
         {
-            TextureStrings = new Dictionary<string, string>();
-            TextureStringPicker = new Dictionary<string, string>();
+            Textures = new Dictionary<string, Texture>();
         }
 
         protected ControlWithMultipleTextures(ControlWithMultipleTextures other) : base(other)
         {
-            TextureStrings = other.TextureStrings;
-            TextureStringPicker = other.TextureStringPicker;
+            Textures = other.Textures;
         }
 
         public override IControl Clone()
@@ -30,26 +28,27 @@ namespace Zen.GuiControls
             return new ControlWithMultipleTextures(this);
         }
 
-        public void AddTexture(string textureName, string textureString)
+        protected void AddTexture(string textureName, Texture texture)
         {
             // up-sert
-            TextureStrings[textureName] = textureString;
+            Textures[textureName] = texture;
         }
 
-        protected virtual void InDraw(SpriteBatch spriteBatch, Texture2D texture, Rectangle sourceRectangle)
+        protected virtual void InDraw(SpriteBatch spriteBatch, Texture2D texture, Rectangle sourceRectangle, Rectangle destinationRectangle)
         {
         }
 
         protected override void InDraw(SpriteBatch spriteBatch)
         {
-            var key = $"{Status}-{Enabled}";
-            var textureLookup = TextureStringPicker[key];
-            var textureName = TextureStrings[textureLookup];
+            foreach (var item in Textures.Values)
+            {
+                if (!item.IsValid()) continue;
 
-            var texture = GetTexture2D(textureName);
-            var rectangle = GetSourceRectangle(texture, textureName);
-
-            InDraw(spriteBatch, texture, rectangle);
+                var texture = GetTexture2D(item.TextureString);
+                var sourceRectangle = GetSourceRectangle(texture, item.TextureString);
+                var destinationRectangle = item.DestinationRectangle.Invoke();
+                InDraw(spriteBatch, texture, sourceRectangle, destinationRectangle);
+            }
         }
 
         protected static Rectangle GetSourceRectangle(Texture2D texture, string textureName)

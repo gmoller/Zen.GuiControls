@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Zen.Utilities.ExtensionMethods;
@@ -10,6 +9,18 @@ namespace Zen.GuiControls
     public class Frame : ControlWithMultipleTextures
     {
         #region State
+        private string _textureName;
+
+        public string TextureName
+        {
+            get => _textureName;
+            set
+            {
+                _textureName = value;
+                AddTexture("TextureName", new Texture(value, () => true, () => Bounds));
+            }
+        }
+
         /// <summary>
         /// Used to 'stretch' the texture to the size of the frame. Using 9-slice scaling (http://en.wikipedia.org/wiki/9-slice_scaling)
         /// </summary>
@@ -34,15 +45,6 @@ namespace Zen.GuiControls
         /// <param name="name">Name of frame control.</param>
         public Frame(string name) : base(name)
         {
-            TextureStringPicker = new Dictionary<string, string>
-            {
-                {"Active-True", "TextureName"},
-                {"Active-False", "TextureName"},
-                {"MouseOver-True", "TextureName"},
-                {"MouseOver-False", "TextureName"},
-                {"None-True", "TextureName"},
-                {"None-False", "TextureName"}
-            };
         }
 
         private Frame(Frame other) : base(other)
@@ -60,7 +62,7 @@ namespace Zen.GuiControls
 
         protected override void InDraw(SpriteBatch spriteBatch)
         {
-            var textureNameString = TextureStrings["TextureName"];
+            var textureNameString = _textureName;
             if (!textureNameString.HasValue()) return;
 
             var texture = GetTexture2D(textureNameString);

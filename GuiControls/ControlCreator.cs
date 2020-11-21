@@ -256,10 +256,10 @@ namespace Zen.GuiControls
         {
             control = (Button)UpdateGenericProperties(control, state);
 
-            control.AddTexture("TextureActive", state.GetAsString("TextureActive", string.Empty));
-            control.AddTexture("TextureHover", state.GetAsString("TextureHover", string.Empty));
-            control.AddTexture("TextureNormal", state.GetAsString("TextureNormal", string.Empty));
-            control.AddTexture("TextureDisabled", state.GetAsString("TextureDisabled", string.Empty));
+            control.TextureActive = state.GetAsString("TextureActive", string.Empty);
+            control.TextureHover = state.GetAsString("TextureHover", string.Empty);
+            control.TextureNormal = state.GetAsString("TextureNormal", string.Empty);
+            control.TextureDisabled = state.GetAsString("TextureDisabled", string.Empty);
 
             return control;
         }
@@ -283,7 +283,7 @@ namespace Zen.GuiControls
         {
             control = (Frame)UpdateGenericProperties(control, state);
 
-            control.AddTexture("TextureName", state.GetAsString("TextureName", string.Empty));
+            control.TextureName = state.GetAsString("TextureName", string.Empty);
             control.BorderSizeTop = state.GetAsInt32("BorderSize", control.BorderSizeTop);
             control.BorderSizeBottom = state.GetAsInt32("BorderSize", control.BorderSizeBottom);
             control.BorderSizeLeft = state.GetAsInt32("BorderSize", control.BorderSizeLeft);
@@ -315,7 +315,7 @@ namespace Zen.GuiControls
         {
             control = (Image)UpdateGenericProperties(control, state);
 
-            control.AddTexture("TextureName", state.GetAsString("TextureName", string.Empty));
+            control.TextureName = state.GetAsString("TextureName", string.Empty);
 
             return control;
         }
@@ -340,8 +340,9 @@ namespace Zen.GuiControls
             control = (Slider)UpdateGenericProperties(control, state);
 
             control.GripSize = state.GetAsPointI("GripSize", PointI.Empty);
-            control.AddTexture("TextureName", state.GetAsString("TextureName", string.Empty));
-            control.AddTexture("TextureGrip", state.GetAsString("TextureGrip", string.Empty));
+            control.TextureName = state.GetAsString("TextureName", string.Empty);
+            control.TextureGripNormal = state.GetAsString("TextureGripNormal", string.Empty);
+            control.TextureGripHover = state.GetAsString("TextureGripHover", string.Empty);
             control.MinimumValue = state.GetAsInt32("MinimumValue", 0);
             control.MaximumValue = state.GetAsInt32("MaximumValue", 0);
             control.CurrentValue = state.GetAsInt32("CurrentValue", 0);

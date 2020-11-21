@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Zen.Assets;
+using Zen.GuiControls.PackagesClasses;
+using Zen.Input;
 using Zen.Utilities;
-using Zen.Utilities.ExtensionMethods;
 
 namespace Zen.GuiControls
 {
@@ -13,6 +12,53 @@ namespace Zen.GuiControls
     public class Slider : ControlWithMultipleTextures
     {
         #region State
+        private string _textureName;
+        public string TextureName
+        {
+            get => _textureName;
+            set
+            {
+                _textureName = value;
+                AddTexture("TextureName", new Texture(value, () => true, () => Bounds));
+            }
+        }
+
+        private string _textureGripNormal;
+        public string TextureGripNormal
+        {
+            get => _textureGripNormal;
+            set
+            {
+                _textureGripNormal = value;
+                AddTexture("TextureGripNormal", new Texture(value, TextureGripNormalIsValid, GetDestination));
+            }
+        }
+
+        private string _textureGripHover;
+        public string TextureGripHover
+        {
+            get => _textureGripHover;
+            set
+            {
+                _textureGripHover = value;
+                AddTexture("TextureGripHover", new Texture(value, TextureGripHoverIsValid, GetDestination));
+            }
+        }
+
+        private bool TextureGripHoverIsValid()
+        {
+            var isValid = Status == ControlStatus.MouseOver && GetDestination().Contains(Input.Mouse.Location) && Enabled;
+
+            return isValid;
+        }
+
+        private bool TextureGripNormalIsValid()
+        {
+            var isValid = !TextureGripHoverIsValid();
+
+            return isValid;
+        }
+
         public PointI GripSize { get; set; }
         public int MinimumValue { get; set; }
         public int MaximumValue { get; set; }
@@ -31,15 +77,7 @@ namespace Zen.GuiControls
         /// <param name="name">Name of control.</param>
         public Slider(string name) : base(name)
         {
-            TextureStringPicker = new Dictionary<string, string>
-            {
-                {"Active-True", "TextureName"},
-                {"Active-False", "TextureName"},
-                {"MouseOver-True", "TextureName"},
-                {"MouseOver-False", "TextureName"},
-                {"None-True", "TextureName"},
-                {"None-False", "TextureName"}
-            };
+            AddPackage(new ControlDrag(UpdateSliderCurrentValue));
         }
 
         private Slider(Slider other) : base(other)
@@ -55,27 +93,33 @@ namespace Zen.GuiControls
             return new Slider(this);
         }
 
-        protected override void InDraw(SpriteBatch spriteBatch, Texture2D texture, Rectangle sourceRectangle)
+        protected override void InDraw(SpriteBatch spriteBatch, Texture2D texture, Rectangle sourceRectangle, Rectangle destinationRectangle)
         {
-            spriteBatch.Draw(texture, ActualDestinationRectangle, sourceRectangle, Color, 0.0f, Vector2.Zero, SpriteEffects.None, LayerDepth);
-
-            var textureGripString = TextureStrings["TextureGrip"];
-            var textureGrip = GetTexture2D(textureGripString);
-            var rectangle = GetSourceRectangle(textureGrip, textureGripString);
-            var destination = GetDestination(GripSize, CurrentValue, MinimumValue, MaximumValue, ActualDestinationRectangle);
-
-            spriteBatch.Draw(textureGrip, destination, rectangle, Color, 0.0f, Vector2.Zero, SpriteEffects.None, LayerDepth);
+            spriteBatch.Draw(texture, destinationRectangle, sourceRectangle, Color, 0.0f, Vector2.Zero, SpriteEffects.None, LayerDepth);
         }
 
-        private static Rectangle GetDestination(PointI size, int current, int minimum, int maximum, Rectangle actualDestinationRectangle)
+        private Rectangle GetDestination()
         {
-            var ratio = current / (float)(minimum + maximum);
-            var x = actualDestinationRectangle.X + actualDestinationRectangle.Width * ratio - size.X * 0.5f;
-            var y = (actualDestinationRectangle.Top + actualDestinationRectangle.Bottom) * 0.5f - size.Y * 0.5f;
+            var ratio = CurrentValue / (float)(MinimumValue + MaximumValue);
+            var x = Bounds.X + Bounds.Width * ratio - GripSize.X * 0.5f;
+            var y = (Bounds.Top + Bounds.Bottom) * 0.5f - GripSize.Y * 0.5f;
 
-            var rectangle = new Rectangle((int)x, (int)y, size.X, size.Y);
+            var rectangle = new Rectangle((int)x, (int)y, GripSize.X, GripSize.Y);
 
             return rectangle;
+        }
+
+        private static void UpdateSliderCurrentValue(object sender, EventArgs args)
+        {
+            var slr = (Slider)sender;
+            var mouseEventArgs = (MouseEventArgs)args;
+
+            var x = (float)mouseEventArgs.Mouse.Location.X; // - slr.GripSize.X * 0.5f;
+
+            var ratio = (x - slr.Bounds.X) / (slr.Bounds.X + slr.Bounds.Width);
+            var currentValue = ratio * (slr.MinimumValue + slr.MaximumValue);
+
+            slr.CurrentValue = (int)currentValue;
         }
     }
 }

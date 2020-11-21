@@ -31,7 +31,7 @@ slrTest : Slider
 
   GripSize: [5;5]
   TextureName: 'GUI_Textures_1.texture1'
-  TextureGrip: 'GUI_Textures_1.texture2'
+  TextureGripNormal: 'GUI_Textures_1.texture2'
   MinimumValue: 0
   MaximumValue: 100
   CurrentValue: 0
@@ -47,7 +47,7 @@ slrTest : Slider
             Assert.IsTrue(ctrl1.Owner is SliderControlTests);
             Assert.AreEqual("slrTest", ctrl1.Name);
             Assert.AreEqual(null, ctrl1.Parent);
-            Assert.AreEqual(new Rectangle(0, 0, 100, 20), ctrl1.Area);
+            Assert.AreEqual(new Rectangle(0, 0, 100, 20), ctrl1.Bounds);
             Assert.AreEqual(Color.Blue, ctrl1.Color);
             Assert.AreEqual(Color.Green, ctrl1.BackgroundColor);
             Assert.AreEqual(Color.Red, ctrl1.BorderColor);
@@ -57,8 +57,8 @@ slrTest : Slider
 
             var slider1 = (Slider)ctrl1;
             Assert.AreEqual(new PointI(5, 5), slider1.GripSize);
-            Assert.AreEqual("GUI_Textures_1.texture1", slider1.TextureStrings["TextureName"]);
-            Assert.AreEqual("GUI_Textures_1.texture2", slider1.TextureStrings["TextureGrip"]);
+            Assert.AreEqual("GUI_Textures_1.texture1", slider1.TextureName);
+            Assert.AreEqual("GUI_Textures_1.texture2", slider1.TextureGripNormal);
             Assert.AreEqual(0, slider1.MinimumValue);
             Assert.AreEqual(100, slider1.MaximumValue);
             Assert.AreEqual(0, slider1.CurrentValue);

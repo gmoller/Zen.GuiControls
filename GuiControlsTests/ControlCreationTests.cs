@@ -35,14 +35,14 @@ frmTest : Frame
             Assert.IsTrue(ctrl1.Owner is ControlCreationTests);
             Assert.AreEqual("frmTest", ctrl1.Name);
             Assert.AreEqual(null, ctrl1.Parent);
-            Assert.AreEqual(new Rectangle(1680, 0, 100, 100), ctrl1.Area);
+            Assert.AreEqual(new Rectangle(1680, 0, 100, 100), ctrl1.Bounds);
             Assert.AreEqual(new PointI(1680, 0), ctrl1.TopLeft);
             Assert.AreEqual(new PointI(1780, 0), ctrl1.TopRight);
             Assert.AreEqual(new PointI(1680, 100), ctrl1.BottomLeft);
             Assert.AreEqual(new PointI(1780, 100), ctrl1.BottomRight);
 
             var frame1 = (Frame)ctrl1;
-            Assert.AreEqual("GUI_Textures_1.frame_texture", frame1.TextureStrings["TextureName"]);
+            Assert.AreEqual("GUI_Textures_1.frame_texture", frame1.TextureName);
         }
 
         [Test]
@@ -90,7 +90,7 @@ lblTest : Label
             Assert.IsTrue(ctrl1.Owner is ControlCreationTests);
             Assert.AreEqual("frmTest", ctrl1.Name);
             Assert.AreEqual(null, ctrl1.Parent);
-            Assert.AreEqual(new Rectangle(1680, 0, 100, 100), ctrl1.Area);
+            Assert.AreEqual(new Rectangle(1680, 0, 100, 100), ctrl1.Bounds);
             Assert.AreEqual(new PointI(1680, 0), ctrl1.TopLeft);
             Assert.AreEqual(new PointI(1780, 0), ctrl1.TopRight);
             Assert.AreEqual(new PointI(1680, 100), ctrl1.BottomLeft);
@@ -101,7 +101,7 @@ lblTest : Label
             Assert.AreEqual("lblTest", ctrl3.Name);
             Assert.AreEqual(ctrl1, ctrl3.Parent);
             Assert.AreEqual(ctrl2, ctrl3.Parent);
-            Assert.AreEqual(new Rectangle(1700, 20, 100, 15), ctrl3.Area);
+            Assert.AreEqual(new Rectangle(1700, 20, 100, 15), ctrl3.Bounds);
             Assert.AreEqual(new PointI(1700, 20), ctrl3.TopLeft);
             Assert.AreEqual(new PointI(1800, 20), ctrl3.TopRight);
             Assert.AreEqual(new PointI(1700, 35), ctrl3.BottomLeft);
@@ -164,7 +164,7 @@ lblTest3 : lblTemplate1
             var label1 = (Label)lblTest1;
             Assert.AreEqual("lblTest1", label1.Name);
             Assert.AreEqual(null, label1.Parent);
-            Assert.AreEqual(new Rectangle(50, 50, 100, 15), label1.Area);
+            Assert.AreEqual(new Rectangle(50, 50, 100, 15), label1.Bounds);
             Assert.AreEqual(new PointI(50, 50), label1.TopLeft);
             Assert.AreEqual(new PointI(150, 50), label1.TopRight);
             Assert.AreEqual(new PointI(50, 65), label1.BottomLeft);
@@ -178,7 +178,7 @@ lblTest3 : lblTemplate1
             var label2 = (Label)lblTest2;
             Assert.AreEqual("lblTest2", label2.Name);
             Assert.AreEqual(null, label2.Parent);
-            Assert.AreEqual(new Rectangle(50, 50, 100, 15), label2.Area);
+            Assert.AreEqual(new Rectangle(50, 50, 100, 15), label2.Bounds);
             Assert.AreEqual(new PointI(50, 50), label2.TopLeft);
             Assert.AreEqual(new PointI(150, 50), label2.TopRight);
             Assert.AreEqual(new PointI(50, 65), label2.BottomLeft);
@@ -192,7 +192,7 @@ lblTest3 : lblTemplate1
             var label3 = (Label)lblTest3;
             Assert.AreEqual("lblTest3", label3.Name);
             Assert.AreEqual(null, label3.Parent);
-            Assert.AreEqual(new Rectangle(50, 50, 100, 15), label3.Area);
+            Assert.AreEqual(new Rectangle(50, 50, 100, 15), label3.Bounds);
             Assert.AreEqual(new PointI(50, 50), label3.TopLeft);
             Assert.AreEqual(new PointI(150, 50), label3.TopRight);
             Assert.AreEqual(new PointI(50, 65), label3.BottomLeft);

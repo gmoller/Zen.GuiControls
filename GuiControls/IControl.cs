@@ -143,7 +143,7 @@ namespace Zen.GuiControls
         /// </summary>
         PointI BottomRight { get; }
 
-        Rectangle Area { get; }
+        Rectangle Bounds { get; }
 
         /// <summary>
         /// Position of this controls TopLeft point, relative to the TopLeft of the parent control.
