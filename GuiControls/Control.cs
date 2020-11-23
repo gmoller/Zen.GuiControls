@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -62,6 +63,8 @@ namespace Zen.GuiControls
         public Controls ChildControls { get; }
 
         public Packages Packages { get; }
+
+        protected Dictionary<string, Texture> Textures { get; }
         #endregion
 
         #region Accessors
@@ -87,6 +90,27 @@ namespace Zen.GuiControls
         public IControl this[string key] => ChildControls.FindControl(key);
         #endregion
 
+        protected Control(string name)
+        {
+            Name = name;
+
+            LayerDepth = 0.0f;
+            Position = PointI.Empty;
+            PositionAlignment = Alignment.TopLeft;
+            Size = PointI.Zero;
+            Color = Color.White;
+            BackgroundColor = Color.Transparent;
+            BorderColor = Color.Transparent;
+            Status = ControlStatus.None;
+            Enabled = true;
+            Visible = true;
+
+            Packages = new Packages();
+            Textures = new Dictionary<string, Texture>();
+
+            ChildControls = new Controls();
+        }
+
         protected Control(Control other)
         {
             Name = other.Name;
@@ -104,25 +128,9 @@ namespace Zen.GuiControls
             Enabled = other.Enabled;
             Visible = other.Visible;
             LayerDepth = other.LayerDepth;
-        }
-
-        protected Control(string name)
-        {
-            Name = name;
-
-            LayerDepth = 0.0f;
-            Position = PointI.Empty;
-            PositionAlignment = Alignment.TopLeft;
-            Size = PointI.Zero;
-            Color = Color.White;
-            BackgroundColor = Color.Transparent;
-            BorderColor = Color.Transparent;
-            Status = ControlStatus.None;
-            Enabled = true;
-            Visible = true;
-
-            ChildControls = new Controls();
-            Packages = new Packages();
+            
+            // need to deep copy
+            Textures = other.Textures.Keys.ToDictionary(_ => _, _ => other.Textures[_]);
         }
 
         public abstract IControl Clone();
@@ -252,6 +260,16 @@ namespace Zen.GuiControls
             ChildControls.Add(childControl.Name, childControl);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="textureName"></param>
+        /// <param name="texture"></param>
+        protected void AddTexture(string textureName, Texture texture)
+        {
+            // up-sert
+            Textures[textureName] = texture;
+        }
 
         /// <summary>
         /// Change position relative to current position.
@@ -299,21 +317,15 @@ namespace Zen.GuiControls
             ChildControls.Update(input, deltaTime, viewport);
         }
 
-        protected virtual void InDraw(SpriteBatch spriteBatch)
-        {
-        }
-
-        protected virtual void InDraw(Matrix? transform = null)
-        {
-        }
-
         public virtual void Draw(SpriteBatch spriteBatch)
         {
             if (Visible)
             {
+                // background
                 spriteBatch.FillRectangle(Bounds, BackgroundColor, LayerDepth);
 
-                InDraw(spriteBatch);
+                DrawTextures(spriteBatch);
+                DrawExtra(spriteBatch);
 
                 spriteBatch.DrawRectangle(
                     new Rectangle(Bounds.X, Bounds.Y, Bounds.Width - 1, Bounds.Height - 1),
@@ -325,11 +337,43 @@ namespace Zen.GuiControls
             ChildControls.Draw(spriteBatch);
         }
 
+        private void DrawTextures(SpriteBatch spriteBatch)
+        {
+            foreach (var item in Textures.Values)
+            {
+                if (!item.TextureString.HasValue()) continue;
+                if (!item.IsValid()) continue;
+
+                var texture = ControlHelper.GetTexture2D(item.TextureString);
+                DrawSingleTexture(spriteBatch, item, texture);
+            }
+        }
+
+        protected virtual void DrawSingleTexture(SpriteBatch spriteBatch, Texture item, Texture2D texture)
+        {
+            var sourceRectangle = ControlHelper.GetSourceRectangle(texture, item.TextureString);
+            var destinationRectangle = item.DestinationRectangle.Invoke();
+
+            if (texture.HasValue())
+            {
+                spriteBatch.Draw(texture, destinationRectangle, sourceRectangle, Color, 0.0f, Vector2.Zero, SpriteEffects.None, LayerDepth);
+            }
+        }
+
+        protected virtual void DrawExtra(SpriteBatch spriteBatch)
+        {
+        }
+
+        // TODO: check on this
         public void Draw(Matrix? transform = null)
         {
             InDraw(transform);
 
             ChildControls.Draw(transform);
+        }
+
+        protected virtual void InDraw(Matrix? transform = null)
+        {
         }
 
         public override string ToString()

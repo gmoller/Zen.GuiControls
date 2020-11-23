@@ -6,7 +6,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Zen.Assets;
 using Zen.Input;
 
-namespace Zen.GuiControls
+namespace Zen.GuiControls.TheControls
 {
     [DebuggerDisplay("{" + nameof(DebuggerDisplay) + ",nq}")]
     public class Label : Control
@@ -19,6 +19,15 @@ namespace Zen.GuiControls
         public float Scale { get; set; }
         public string FontName { get; set; }
         #endregion
+
+        public string TextureName
+        {
+            get => Textures.ContainsKey("TextureName") ? Textures["TextureName"].TextureString : string.Empty;
+            set
+            {
+                AddTexture("TextureName", new Texture(value, () => true, () => Bounds));
+            }
+        }
 
         /// <summary>
         /// An awesome little label.
@@ -66,7 +75,7 @@ namespace Zen.GuiControls
             base.Update(input, deltaTime, viewport);
         }
 
-        protected override void InDraw(SpriteBatch spriteBatch)
+        protected override void DrawExtra(SpriteBatch spriteBatch)
         {
             var font = AssetsManager.Instance.GetSpriteFont(FontName);
 

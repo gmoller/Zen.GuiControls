@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using NUnit.Framework;
 using Zen.GuiControls;
+using Zen.GuiControls.TheControls;
 
 namespace Zen.GuiControlsTests
 {

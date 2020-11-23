@@ -1,26 +1,13 @@
 ﻿using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Zen.Utilities.ExtensionMethods;
 
-namespace Zen.GuiControls
+namespace Zen.GuiControls.TheControls
 {
     [DebuggerDisplay("{" + nameof(DebuggerDisplay) + ",nq}")]
-    public class Frame : ControlWithMultipleTextures
+    public class Frame : Control
     {
         #region State
-        private string _textureName;
-
-        public string TextureName
-        {
-            get => _textureName;
-            set
-            {
-                _textureName = value;
-                AddTexture("TextureName", new Texture(value, () => true, () => Bounds));
-            }
-        }
-
         /// <summary>
         /// Used to 'stretch' the texture to the size of the frame. Using 9-slice scaling (http://en.wikipedia.org/wiki/9-slice_scaling)
         /// </summary>
@@ -39,12 +26,25 @@ namespace Zen.GuiControls
         public int BorderSizeRight { get; set; }
         #endregion
 
+        public string TextureName
+        {
+            get => Textures.ContainsKey("TextureName") ? Textures["TextureName"].TextureString : string.Empty;
+            set
+            {
+                AddTexture("TextureName", new Texture(value, () => true, () => Bounds));
+            }
+        }
+
         /// <summary>
         /// A pretty little frame.
         /// </summary>
         /// <param name="name">Name of frame control.</param>
         public Frame(string name) : base(name)
         {
+            BorderSizeTop = 0;
+            BorderSizeBottom = 0;
+            BorderSizeLeft = 0;
+            BorderSizeRight = 0;
         }
 
         private Frame(Frame other) : base(other)
@@ -60,15 +60,10 @@ namespace Zen.GuiControls
             return new Frame(this);
         }
 
-        protected override void InDraw(SpriteBatch spriteBatch)
+        protected override void DrawSingleTexture(SpriteBatch spriteBatch, Texture item, Texture2D texture)
         {
-            var textureNameString = _textureName;
-            if (!textureNameString.HasValue()) return;
-
-            var texture = GetTexture2D(textureNameString);
-            var sourceRectangles = GetSourceRectangles(texture, textureNameString, BorderSizeTop, BorderSizeBottom, BorderSizeLeft, BorderSizeRight);
-
-            var destinationRectangles = Get9SliceScaleRectangles(new Rectangle(TopLeft.X, TopLeft.Y, Size.X, Size.Y), BorderSizeTop, BorderSizeBottom, BorderSizeLeft, BorderSizeRight);
+            var sourceRectangles = ControlHelper.GetSourceRectangles(texture, item.TextureString, BorderSizeTop, BorderSizeBottom, BorderSizeLeft, BorderSizeRight);
+            var destinationRectangles = ControlHelper.Get9SliceScaleRectangles(new Rectangle(TopLeft.X, TopLeft.Y, Size.X, Size.Y), BorderSizeTop, BorderSizeBottom, BorderSizeLeft, BorderSizeRight);
             for (var i = 0; i < sourceRectangles.Length; i++)
             {
                 spriteBatch.Draw(texture, destinationRectangles[i], sourceRectangles[i], Color, 0.0f, Vector2.Zero, SpriteEffects.None, LayerDepth);

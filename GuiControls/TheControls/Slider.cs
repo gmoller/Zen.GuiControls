@@ -2,49 +2,50 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Zen.GuiControls.PackagesClasses;
 using Zen.Input;
 using Zen.MonoGameUtilities.ExtensionMethods;
 using Zen.Utilities;
 
-namespace Zen.GuiControls
+namespace Zen.GuiControls.TheControls
 {
     [DebuggerDisplay("{" + nameof(DebuggerDisplay) + ",nq}")]
-    public class Slider : ControlWithMultipleTextures
+    public class Slider : Control
     {
         #region State
-        private string _textureName;
+        public PointI GripSize { get; set; }
+        public int MinimumValue { get; set; }
+        public int MaximumValue { get; set; }
+        
+        private int _currentValue;
+        public int CurrentValue
+        {
+            get => _currentValue;
+            set => _currentValue = Math.Clamp(value, MinimumValue, MaximumValue);
+        }
+
+        public List<PointI> SlidePath { get; set; }
+        #endregion
+
         public string TextureName
         {
-            get => _textureName;
+            get => Textures.ContainsKey("TextureName") ? Textures["TextureName"].TextureString : string.Empty;
             set
             {
-                _textureName = value;
                 AddTexture("TextureName", new Texture(value, () => true, () => Bounds));
             }
         }
 
-        private string _textureGripNormal;
         public string TextureGripNormal
         {
-            get => _textureGripNormal;
-            set
-            {
-                _textureGripNormal = value;
-                AddTexture("TextureGripNormal", new Texture(value, TextureGripNormalIsValid, GetDestination));
-            }
+            get => Textures.ContainsKey("TextureGripNormal") ? Textures["TextureGripNormal"].TextureString : string.Empty;
+            set => AddTexture("TextureGripNormal", new Texture(value, TextureGripNormalIsValid, GetDestination));
         }
 
-        private string _textureGripHover;
         public string TextureGripHover
         {
-            get => _textureGripHover;
-            set
-            {
-                _textureGripHover = value;
-                AddTexture("TextureGripHover", new Texture(value, TextureGripHoverIsValid, GetDestination));
-            }
+            get => Textures.ContainsKey("TextureGripHover") ? Textures["TextureGripHover"].TextureString : string.Empty;
+            set => AddTexture("TextureGripHover", new Texture(value, TextureGripHoverIsValid, GetDestination));
         }
 
         private bool TextureGripHoverIsValid()
@@ -61,34 +62,25 @@ namespace Zen.GuiControls
             return isValid;
         }
 
-        public PointI GripSize { get; set; }
-        public int MinimumValue { get; set; }
-        public int MaximumValue { get; set; }
-        
-        private int _currentValue;
-        public int CurrentValue
-        {
-            get => _currentValue;
-            set => _currentValue = Math.Clamp(value, MinimumValue, MaximumValue);
-        }
-
-        public List<PointI> SlidePath { get; set; }
-        #endregion
-
         /// <summary>
         /// An wonderful little slider.
         /// </summary>
         /// <param name="name">Name of control.</param>
         public Slider(string name) : base(name)
         {
+            GripSize = PointI.Empty;
+            MinimumValue = 0;
+            MaximumValue = 0;
+            CurrentValue = 0;
+            SlidePath = new List<PointI>();
             AddPackage(new ControlDrag(UpdateSliderCurrentValue));
         }
 
         private Slider(Slider other) : base(other)
         {
-            TextureName = other.TextureName;
-            TextureGripNormal = other.TextureGripNormal;
-            TextureGripHover = other.TextureGripHover;
+            //TextureName = other.TextureName;
+            //TextureGripNormal = other.TextureGripNormal;
+            //TextureGripHover = other.TextureGripHover;
             GripSize = other.GripSize;
             MinimumValue = other.MinimumValue;
             MaximumValue = other.MaximumValue;
@@ -99,11 +91,6 @@ namespace Zen.GuiControls
         public override IControl Clone()
         {
             return new Slider(this);
-        }
-
-        protected override void InDraw(SpriteBatch spriteBatch, Texture2D texture, Rectangle sourceRectangle, Rectangle destinationRectangle)
-        {
-            spriteBatch.Draw(texture, destinationRectangle, sourceRectangle, Color, 0.0f, Vector2.Zero, SpriteEffects.None, LayerDepth);
         }
 
         private Rectangle GetDestination()

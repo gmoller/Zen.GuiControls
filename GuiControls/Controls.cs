@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -9,6 +10,7 @@ using Zen.Utilities;
 
 namespace Zen.GuiControls
 {
+    [DebuggerDisplay("{" + nameof(DebuggerDisplay) + ",nq}")]
     public class Controls : IEnumerable<IControl>
     {
         private Dictionary<string, IControl> ChildControlsList { get; }
@@ -38,6 +40,16 @@ namespace Zen.GuiControls
 
             return childControl;
         }
+
+        //public void WatchForChanges(string path)
+        //{
+        //    var watcher = new FileSystemWatcher();
+        //    watcher.Path = path;
+        //    watcher.NotifyFilter = NotifyFilters.LastWrite;
+        //    watcher.Filter = "*.txt";
+        //    watcher.Changed += OnChanged;
+        //    watcher.EnableRaisingEvents = true;
+        //}
 
         public void LoadContent(ContentManager content, bool loadChildrenContent = false)
         {

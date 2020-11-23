@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using NUnit.Framework;
 using Zen.GuiControls;
+using Zen.GuiControls.TheControls;
 using Zen.Utilities;
 
 namespace Zen.GuiControlsTests

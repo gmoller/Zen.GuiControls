@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Zen.GuiControls.TheControls;
 using Zen.Utilities;
 using Zen.Utilities.ExtensionMethods;
 
@@ -233,6 +234,7 @@ namespace Zen.GuiControls
             control.GetTextFunc = state.GetAsGetTextFunc("GetTextFunc", callingTypeFullName, callingAssemblyFullName);
             control.TextShadowColor = state.GetAsColor("TextShadowColor", control.TextShadowColor);
             control.Scale = state.GetAsSingle("Scale", control.Scale);
+            control.TextureName = state.GetAsString("TextureName", control.TextureName);
 
             return control;
         }

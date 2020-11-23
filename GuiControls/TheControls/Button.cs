@@ -1,52 +1,42 @@
 ﻿using System.Diagnostics;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 
-namespace Zen.GuiControls
+namespace Zen.GuiControls.TheControls
 {
     [DebuggerDisplay("{" + nameof(DebuggerDisplay) + ",nq}")]
-    public class Button : ControlWithMultipleTextures
+    public class Button : Control
     {
-        private string _textureNormal;
         public string TextureNormal
         {
-            get => _textureNormal;
+            get => Textures.ContainsKey("TextureNormal") ? Textures["TextureNormal"].TextureString : string.Empty;
             set
             {
-                _textureNormal = value; 
                 AddTexture("TextureNormal", new Texture(value, () => Status == ControlStatus.None && Enabled, () => Bounds));
             }
         }
 
-        private string _textureActive;
         public string TextureActive
         {
-            get => _textureActive;
+            get => Textures.ContainsKey("TextureActive") ? Textures["TextureActive"].TextureString : string.Empty;
             set
             {
-                _textureActive = value;
                 AddTexture("TextureActive", new Texture(value, () => Status == ControlStatus.Active && Enabled, () => Bounds));
             }
         }
 
-        private string _textureHover;
         public string TextureHover
         {
-            get => _textureHover;
+            get => Textures.ContainsKey("TextureHover") ? Textures["TextureHover"].TextureString : string.Empty;
             set
             {
-                _textureHover = value;
                 AddTexture("TextureHover", new Texture(value, () => Status == ControlStatus.MouseOver && Enabled, () => Bounds));
             }
         }
 
-        private string _textureDisabled;
         public string TextureDisabled
         {
-            get => _textureDisabled;
+            get => Textures.ContainsKey("TextureDisabled") ? Textures["TextureDisabled"].TextureString : string.Empty;
             set
             {
-                _textureDisabled = value;
                 AddTexture("TextureDisabled", new Texture(value, () => !Enabled, () => Bounds));
             }
         }
@@ -66,11 +56,6 @@ namespace Zen.GuiControls
         public override IControl Clone()
         {
             return new Button(this);
-        }
-
-        protected override void InDraw(SpriteBatch spriteBatch, Texture2D texture, Rectangle sourceRectangle, Rectangle destinationRectangle)
-        {
-            spriteBatch.Draw(texture, destinationRectangle, sourceRectangle, Color, 0.0f, Vector2.Zero, SpriteEffects.None, LayerDepth);
         }
     }
 }
