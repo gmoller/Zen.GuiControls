@@ -27,37 +27,34 @@ namespace Zen.GuiControls.TheControls
         public List<PointI> SlidePath { get; set; }
         #endregion
 
-        public string TextureName
+        public string TextureNormal
         {
-            get => Textures.ContainsKey("TextureName") ? Textures["TextureName"].TextureString : string.Empty;
-            set
-            {
-                AddTexture("TextureName", new Texture(value, () => true, () => Bounds));
-            }
+            get => Textures.ContainsKey("TextureNormal") ? Textures["TextureNormal"].TextureString : string.Empty;
+            set => AddTexture("TextureNormal", new Texture("TextureNormal", value, control => true, control => Bounds));
         }
 
         public string TextureGripNormal
         {
             get => Textures.ContainsKey("TextureGripNormal") ? Textures["TextureGripNormal"].TextureString : string.Empty;
-            set => AddTexture("TextureGripNormal", new Texture(value, TextureGripNormalIsValid, GetDestination));
+            set => AddTexture("TextureGripNormal", new Texture("TextureGripNormal", value, TextureGripNormalIsValid, GetDestination));
         }
 
         public string TextureGripHover
         {
             get => Textures.ContainsKey("TextureGripHover") ? Textures["TextureGripHover"].TextureString : string.Empty;
-            set => AddTexture("TextureGripHover", new Texture(value, TextureGripHoverIsValid, GetDestination));
+            set => AddTexture("TextureGripHover", new Texture("TextureGripHover", value, TextureGripHoverIsValid, GetDestination));
         }
 
-        private bool TextureGripHoverIsValid()
+        private bool TextureGripHoverIsValid(IControl control)
         {
-            var isValid = Status == ControlStatus.MouseOver && GetDestination().Contains(Input.Mouse.Location) && Enabled;
+            var isValid = Status == ControlStatus.MouseOver && GetDestination(control).Contains(Input.Mouse.Location) && Enabled;
 
             return isValid;
         }
 
-        private bool TextureGripNormalIsValid()
+        private bool TextureGripNormalIsValid(IControl control)
         {
-            var isValid = !TextureGripHoverIsValid();
+            var isValid = !TextureGripHoverIsValid(control);
 
             return isValid;
         }
@@ -93,7 +90,7 @@ namespace Zen.GuiControls.TheControls
             return new Slider(this);
         }
 
-        private Rectangle GetDestination()
+        private Rectangle GetDestination(IControl control)
         {
             var ratio = CurrentValue / (float)(MinimumValue + MaximumValue);
             var p = Bounds.Location.ToPointI() + PointI.Lerp(SlidePath[0], SlidePath[1], ratio);

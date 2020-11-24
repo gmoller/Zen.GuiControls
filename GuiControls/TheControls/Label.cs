@@ -20,13 +20,28 @@ namespace Zen.GuiControls.TheControls
         public string FontName { get; set; }
         #endregion
 
-        public string TextureName
+        public string TextureNormal
         {
-            get => Textures.ContainsKey("TextureName") ? Textures["TextureName"].TextureString : string.Empty;
-            set
-            {
-                AddTexture("TextureName", new Texture(value, () => true, () => Bounds));
-            }
+            get => Textures.ContainsKey("TextureNormal") ? Textures["TextureNormal"].TextureString : string.Empty;
+            set => AddTexture("TextureNormal", new Texture("TextureNormal", value, control => true, control => Bounds));
+        }
+
+        public string TextureActive
+        {
+            get => Textures.ContainsKey("TextureActive") ? Textures["TextureActive"].TextureString : string.Empty;
+            set => AddTexture("TextureActive", new Texture("TextureActive", value, control => Status == ControlStatus.Active && Enabled, control => Bounds));
+        }
+
+        public string TextureHover
+        {
+            get => Textures.ContainsKey("TextureHover") ? Textures["TextureHover"].TextureString : string.Empty;
+            set => AddTexture("TextureHover", new Texture("TextureHover", value, control => Status == ControlStatus.MouseOver && Enabled, control => Bounds));
+        }
+
+        public string TextureDisabled
+        {
+            get => Textures.ContainsKey("TextureDisabled") ? Textures["TextureDisabled"].TextureString : string.Empty;
+            set => AddTexture("TextureDisabled", new Texture("TextureDisabled", value, control => !Enabled, control => Bounds));
         }
 
         /// <summary>
@@ -42,7 +57,7 @@ namespace Zen.GuiControls.TheControls
             FontName = string.Empty;
         }
 
-        private Label(Label other) : base(other)
+        protected Label(Label other) : base(other)
         {
             ContentAlignment = other.ContentAlignment;
             Text = other.Text;

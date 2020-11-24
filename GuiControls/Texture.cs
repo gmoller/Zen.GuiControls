@@ -7,12 +7,14 @@ namespace Zen.GuiControls
     [DebuggerDisplay("{" + nameof(DebuggerDisplay) + ",nq}")]
     public readonly struct Texture
     {
+        public string TextureName { get; }
         public string TextureString { get; }
-        public Func<bool> IsValid { get; }
-        public Func<Rectangle> DestinationRectangle { get; }
+        public Func<IControl, bool> IsValid { get; }
+        public Func<IControl, Rectangle> DestinationRectangle { get; }
 
-        public Texture(string textureString, Func<bool> isValid, Func<Rectangle> destinationRectangle)
+        public Texture(string textureName, string textureString, Func<IControl, bool> isValid, Func<IControl, Rectangle> destinationRectangle)
         {
+            TextureName = textureName;
             TextureString = textureString;
             IsValid = isValid;
             DestinationRectangle = destinationRectangle;
@@ -23,6 +25,6 @@ namespace Zen.GuiControls
             return DebuggerDisplay;
         }
 
-        public string DebuggerDisplay => $"{{TextureString={TextureString}}}";
+        public string DebuggerDisplay => $"{{TextureName={TextureName},TextureString={TextureString}}}";
     }
 }

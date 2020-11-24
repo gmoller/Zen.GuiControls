@@ -5,13 +5,10 @@ namespace Zen.GuiControls.TheControls
     [DebuggerDisplay("{" + nameof(DebuggerDisplay) + ",nq}")]
     public class Image : Control
     {
-        public string TextureName
+        public string TextureNormal
         {
-            get => Textures.ContainsKey("TextureName") ? Textures["TextureName"].TextureString : string.Empty;
-            set
-            {
-                AddTexture("TextureName", new Texture(value, () => true, () => Bounds));
-            }
+            get => Textures.ContainsKey("TextureNormal") ? Textures["TextureNormal"].TextureString : string.Empty;
+            set => AddTexture("TextureNormal", new Texture("TextureNormal", value, control => true, control => Bounds));
         }
 
         /// <summary>

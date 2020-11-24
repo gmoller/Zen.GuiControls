@@ -20,7 +20,7 @@ namespace Zen.GuiControlsTests
             var spec = @"
 frmTest : Frame
 {
-  TextureName: 'GUI_Textures_1.frame_texture'
+  TextureNormal: 'GUI_Textures_1.frame_texture'
   Position: [1680;0]
   Size: [100;100]
   BorderSize: 5
@@ -43,7 +43,7 @@ frmTest : Frame
             Assert.AreEqual(new PointI(1780, 100), ctrl1.BottomRight);
 
             var frame1 = (Frame)ctrl1;
-            Assert.AreEqual("GUI_Textures_1.frame_texture", frame1.TextureName);
+            Assert.AreEqual("GUI_Textures_1.frame_texture", frame1.TextureNormal);
         }
 
         [Test]

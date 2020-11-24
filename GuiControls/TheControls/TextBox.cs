@@ -1,12 +1,12 @@
 ﻿namespace Zen.GuiControls.TheControls
 {
-    public class TextBox : Control
+    public class TextBox : Label
     {
         public TextBox(string name) : base(name)
         {
         }
 
-        public TextBox(Control other) : base(other)
+        public TextBox(Label other) : base(other)
         {
         }
 

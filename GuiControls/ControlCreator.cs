@@ -116,7 +116,7 @@ namespace Zen.GuiControls
                 {
                     var control = InstantiateControl(name, type, state, callingType.TypeFullName, callingType.AssemblyFullName, templates);
 
-                    var packagesList = state.GetAsListOfStrings("Packages");
+                    var packagesList = state.GetAsListOfStrings("Packages", new List<string>());
                     var onClickEventHandler = GetEventHandler(state, "Click");
                     if (onClickEventHandler.HasValue())
                     {
@@ -130,7 +130,7 @@ namespace Zen.GuiControls
 
                     control.AddPackages(packagesList, callingType.TypeFullName, callingType.AssemblyFullName);
 
-                    var containsList = state.GetAsListOfStrings("Contains");
+                    var containsList = state.GetAsListOfStrings("Contains", new List<string>());
                     var parentContainerAlignment = GetParentContainerAlignment(state);
                     var offset = state.GetAsPointI("Offset", PointI.Empty);
                     controls.Add(name, (control, containsList, parentContainerAlignment, offset));
@@ -149,16 +149,16 @@ namespace Zen.GuiControls
                     control = InstantiateLabel(name, state, callingTypeFullName, callingAssemblyFullName);
                     break;
                 case "Button":
-                    control = InstantiateButton(name, state);
+                    control = InstantiateButton(name, state, callingTypeFullName, callingAssemblyFullName);
                     break;
                 case "Frame":
-                    control = InstantiateFrame(name, state);
+                    control = InstantiateFrame(name, state, callingTypeFullName, callingAssemblyFullName);
                     break;
                 case "Image":
-                    control = InstantiateImage(name, state);
+                    control = InstantiateImage(name, state, callingTypeFullName, callingAssemblyFullName);
                     break;
                 case "Slider":
-                    control = InstantiateSlider(name, state);
+                    control = InstantiateSlider(name, state, callingTypeFullName, callingAssemblyFullName);
                     break;
                 default:
                     if (templates.ContainsKey(type))
@@ -174,25 +174,25 @@ namespace Zen.GuiControls
                         {
                             control = btn.Clone();
                             control.Name = name;
-                            control = UpdateButton((Button)control, state);
+                            control = UpdateButton((Button)control, state, callingTypeFullName, callingAssemblyFullName);
                         }
                         else if (template is Frame frm)
                         {
                             control = frm.Clone();
                             control.Name = name;
-                            control = UpdateFrame((Frame)control, state);
+                            control = UpdateFrame((Frame)control, state, callingTypeFullName, callingAssemblyFullName);
                         }
                         else if (template is Image img)
                         {
                             control = img.Clone();
                             control.Name = name;
-                            control = UpdateImage((Image)control, state);
+                            control = UpdateImage((Image)control, state, callingTypeFullName, callingAssemblyFullName);
                         }
                         else if (template is Slider slr)
                         {
                             control = slr.Clone();
                             control.Name = name;
-                            control = UpdateSlider((Slider)control, state);
+                            control = UpdateSlider((Slider)control, state, callingTypeFullName, callingAssemblyFullName);
                         }
                         else
                         {
@@ -231,20 +231,24 @@ namespace Zen.GuiControls
             control.FontName = state.GetAsString("FontName", control.FontName);
             control.ContentAlignment = state.GetAsAlignment("ContentAlignment", control.ContentAlignment);
             control.Text = state.GetAsString("Text", control.Text);
-            control.GetTextFunc = state.GetAsGetTextFunc("GetTextFunc", callingTypeFullName, callingAssemblyFullName);
+            control.GetTextFunc = state.GetAsGetTextFunc("GetTextFunc", callingTypeFullName, callingAssemblyFullName, control.GetTextFunc);
             control.TextShadowColor = state.GetAsColor("TextShadowColor", control.TextShadowColor);
             control.Scale = state.GetAsSingle("Scale", control.Scale);
-            control.TextureName = state.GetAsString("TextureName", control.TextureName);
+            control.TextureNormal = state.GetAsString("TextureNormal", control.TextureNormal);
+            control.TextureHover = state.GetAsString("TextureHover", control.TextureHover);
+            control.TextureActive = state.GetAsString("TextureActive", control.TextureActive);
+            control.TextureDisabled = state.GetAsString("TextureDisabled", control.TextureDisabled);
+            control.AddTextures(state.GetAsListOfTextures("Textures", callingTypeFullName, callingAssemblyFullName, new List<Texture>()));
 
             return control;
         }
 
-        private static Button InstantiateButton(string name, StateDictionary state)
+        private static Button InstantiateButton(string name, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
         {
             try
             {
                 var control = new Button(name);
-                control = UpdateButton(control, state);
+                control = UpdateButton(control, state, callingTypeFullName, callingAssemblyFullName);
 
                 return control;
             }
@@ -254,7 +258,7 @@ namespace Zen.GuiControls
             }
         }
 
-        private static Button UpdateButton(Button control, StateDictionary state)
+        private static Button UpdateButton(Button control, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
         {
             control = (Button)UpdateGenericProperties(control, state);
 
@@ -262,16 +266,17 @@ namespace Zen.GuiControls
             control.TextureHover = state.GetAsString("TextureHover", control.TextureHover);
             control.TextureNormal = state.GetAsString("TextureNormal", control.TextureNormal);
             control.TextureDisabled = state.GetAsString("TextureDisabled", control.TextureDisabled);
+            control.AddTextures(state.GetAsListOfTextures("Textures", callingTypeFullName, callingAssemblyFullName, new List<Texture>()));
 
             return control;
         }
 
-        private static Frame InstantiateFrame(string name, StateDictionary state)
+        private static Frame InstantiateFrame(string name, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
         {
             try
             {
                 var control = new Frame(name);
-                control = UpdateFrame(control, state);
+                control = UpdateFrame(control, state, callingTypeFullName, callingAssemblyFullName);
 
                 return control;
             }
@@ -281,11 +286,11 @@ namespace Zen.GuiControls
             }
         }
 
-        private static Frame UpdateFrame(Frame control, StateDictionary state)
+        private static Frame UpdateFrame(Frame control, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
         {
             control = (Frame)UpdateGenericProperties(control, state);
 
-            control.TextureName = state.GetAsString("TextureName", control.TextureName);
+            control.TextureNormal = state.GetAsString("TextureNormal", control.TextureNormal);
             control.BorderSizeTop = state.GetAsInt32("BorderSize", control.BorderSizeTop);
             control.BorderSizeBottom = state.GetAsInt32("BorderSize", control.BorderSizeBottom);
             control.BorderSizeLeft = state.GetAsInt32("BorderSize", control.BorderSizeLeft);
@@ -294,16 +299,17 @@ namespace Zen.GuiControls
             control.BorderSizeBottom = state.GetAsInt32("BorderSizeBottom", control.BorderSizeBottom);
             control.BorderSizeLeft = state.GetAsInt32("BorderSizeLeft", control.BorderSizeLeft);
             control.BorderSizeRight = state.GetAsInt32("BorderSizeRight", control.BorderSizeRight);
+            control.AddTextures(state.GetAsListOfTextures("Textures", callingTypeFullName, callingAssemblyFullName, new List<Texture>()));
 
             return control;
         }
 
-        private static IControl InstantiateImage(string name, StateDictionary state)
+        private static IControl InstantiateImage(string name, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
         {
             try
             {
                 var control = new Image(name);
-                control = UpdateImage(control, state);
+                control = UpdateImage(control, state, callingTypeFullName, callingAssemblyFullName);
 
                 return control;
             }
@@ -313,21 +319,22 @@ namespace Zen.GuiControls
             }
         }
 
-        private static Image UpdateImage(Image control, StateDictionary state)
+        private static Image UpdateImage(Image control, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
         {
             control = (Image)UpdateGenericProperties(control, state);
 
-            control.TextureName = state.GetAsString("TextureName", control.TextureName);
+            control.TextureNormal = state.GetAsString("TextureNormal", control.TextureNormal);
+            control.AddTextures(state.GetAsListOfTextures("Textures", callingTypeFullName, callingAssemblyFullName, new List<Texture>()));
 
             return control;
         }
 
-        private static IControl InstantiateSlider(string name, StateDictionary state)
+        private static IControl InstantiateSlider(string name, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
         {
             try
             {
                 var control = new Slider(name);
-                control = UpdateSlider(control, state);
+                control = UpdateSlider(control, state, callingTypeFullName, callingAssemblyFullName);
 
                 return control;
             }
@@ -337,18 +344,19 @@ namespace Zen.GuiControls
             }
         }
 
-        private static Slider UpdateSlider(Slider control, StateDictionary state)
+        private static Slider UpdateSlider(Slider control, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
         {
             control = (Slider)UpdateGenericProperties(control, state);
 
             control.GripSize = state.GetAsPointI("GripSize", control.GripSize);
-            control.TextureName = state.GetAsString("TextureName", control.TextureName);
+            control.TextureNormal = state.GetAsString("TextureNormal", control.TextureNormal);
             control.TextureGripNormal = state.GetAsString("TextureGripNormal", control.TextureGripNormal);
             control.TextureGripHover = state.GetAsString("TextureGripHover", control.TextureGripHover);
             control.MinimumValue = state.GetAsInt32("MinimumValue", control.MinimumValue);
             control.MaximumValue = state.GetAsInt32("MaximumValue", control.MaximumValue);
             control.CurrentValue = state.GetAsInt32("CurrentValue", control.CurrentValue);
             control.SlidePath = state.GetAsListOfPointI("SlidePath", control.SlidePath);
+            control.AddTextures(state.GetAsListOfTextures("Textures", callingTypeFullName, callingAssemblyFullName, new List<Texture>()));
 
             return control;
         }

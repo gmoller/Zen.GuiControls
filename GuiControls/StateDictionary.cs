@@ -124,20 +124,20 @@ namespace Zen.GuiControls
             return value;
         }
 
-        public Func<object, string> GetAsGetTextFunc(string propertyName, string callingTypeFullName, string callingAssemblyFullName)
+        public Func<object, string> GetAsGetTextFunc(string propertyName, string callingTypeFullName, string callingAssemblyFullName, Func<object, string> dflt)
         {
             var valueAsString = GetString(propertyName);
-            if (!valueAsString.HasValue()) return null;
+            if (!valueAsString.HasValue()) return dflt;
 
             var value = TranslateGetTextFunc(valueAsString, propertyName, callingTypeFullName, callingAssemblyFullName);
 
             return value;
         }
 
-        public List<string> GetAsListOfStrings(string propertyName)
+        public List<string> GetAsListOfStrings(string propertyName, List<string> dflt)
         {
             var valueAsString = GetString(propertyName);
-            if (!valueAsString.HasValue()) return new List<string>();
+            if (!valueAsString.HasValue()) return dflt;
 
             var listOfStrings = new List<string>();
             try
@@ -168,7 +168,7 @@ namespace Zen.GuiControls
                 {
                     var s2 = s.KeepOnlyAfterCharacter('[');
                     var s3 = s2.KeepOnlyBeforeCharacter(']');
-                    var p = new PointI(s);
+                    var p = new PointI(s3);
                     listOfPointI.Add(p);
                 }
             }
@@ -178,6 +178,31 @@ namespace Zen.GuiControls
             }
 
             return listOfPointI;
+        }
+
+        public List<Texture> GetAsListOfTextures(string propertyName, string callingTypeFullName, string callingAssemblyFullName, List<Texture> dflt)
+        {
+            var valueAsString = GetString(propertyName);
+            if (!valueAsString.HasValue()) return dflt;
+
+            var listOfTextures = new List<Texture>();
+            try
+            {
+                var valueAsString2 = valueAsString.RemoveFirstAndLastCharacters();
+                var str = valueAsString2.Split(';');
+                foreach (var s in str)
+                {
+                    var s2 = s.RemoveFirstAndLastCharacters();
+                    var s3 = s2.Split(':');
+                    var texture = new Texture(s3[0], s3[1], TranslateIsValidFunc(s3[2], callingTypeFullName, callingAssemblyFullName), TranslateDestinationFunc(s3[3], callingTypeFullName, callingAssemblyFullName));
+                    listOfTextures.Add(texture);
+                }
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Failed to convert [{valueAsString}] for [{propertyName}] to List<Texture>.", e);
+            }
+            return listOfTextures;
         }
 
         private string GetString(string propertyName)
@@ -260,7 +285,7 @@ namespace Zen.GuiControls
                 {
                     var assemblyQualifiedName = split[0].Trim(); // Game1.EventHandlers, Game1
                     var methodName = split[1].Trim(); // GetTextFunc
-                    var func = ObjectCreator.CreateFuncDelegate(assemblyQualifiedName, methodName);
+                    var func = CreateFuncDelegate(assemblyQualifiedName, methodName);
 
                     return func;
                 }
@@ -271,7 +296,7 @@ namespace Zen.GuiControls
                 {
                     var methodName = split[0].Trim();
                     var assemblyQualifiedName = $"{callingTypeFullName}, {callingAssemblyFullName}";
-                    var func = ObjectCreator.CreateFuncDelegate(assemblyQualifiedName, methodName);
+                    var func = CreateFuncDelegate(assemblyQualifiedName, methodName);
 
                     return func;
                 }
@@ -283,7 +308,7 @@ namespace Zen.GuiControls
                     var className = split[^2].Trim(); // EventHandlers
                     var nameSpace = firstAndLastCharactersRemoved.Replace($".{methodName}", string.Empty).Replace($".{className}", string.Empty); // Game1
                     var assemblyQualifiedName = $"{nameSpace}.{className}, {callingAssemblyFullName}"; // Game1.EventHandlers, Game1
-                    var func = ObjectCreator.CreateFuncDelegate(assemblyQualifiedName, methodName);
+                    var func = CreateFuncDelegate(assemblyQualifiedName, methodName);
 
                     return func;
                 }
@@ -293,6 +318,96 @@ namespace Zen.GuiControls
             catch (Exception e)
             {
                 throw new Exception($"Failed to convert [{getTextFuncAsString}] for property [{propertyName}] to Func.", e);
+            }
+        }
+
+        private Func<IControl, bool> TranslateIsValidFunc(string getIsValidFuncAsString, string callingTypeFullName, string callingAssemblyFullName)
+        {
+            var methodName = getIsValidFuncAsString.Trim();
+            var assemblyQualifiedName = $"{callingTypeFullName}, {callingAssemblyFullName}";
+            var func = CreateFuncDelegate2(assemblyQualifiedName, methodName);
+
+            return func;
+        }
+
+        private Func<IControl, Rectangle> TranslateDestinationFunc(string getDestinationFuncAsString, string callingTypeFullName, string callingAssemblyFullName)
+        {
+            var methodName = getDestinationFuncAsString.Trim();
+            var assemblyQualifiedName = $"{callingTypeFullName}, {callingAssemblyFullName}";
+            var func = CreateFuncDelegate3(assemblyQualifiedName, methodName);
+
+            return func;
+        }
+
+        internal static Action<object, EventArgs> CreateActionDelegate(string assemblyQualifiedName, string methodName)
+        {
+            var methodInfo = ObjectCreator.GetMethod(assemblyQualifiedName, methodName);
+            if (methodInfo.IsStatic)
+            {
+                var action = (Action<object, EventArgs>)Delegate.CreateDelegate(typeof(Action<object, EventArgs>), methodInfo);
+
+                return action;
+            }
+            else
+            {
+                var instantiatedObject = ObjectCreator.CreateInstance(assemblyQualifiedName);
+                var action = (Action<object, EventArgs>)Delegate.CreateDelegate(typeof(Action<object, EventArgs>), instantiatedObject, methodInfo);
+
+                return action;
+            }
+        }
+
+        private static Func<object, string> CreateFuncDelegate(string assemblyQualifiedName, string methodName)
+        {
+            var methodInfo = ObjectCreator.GetMethod(assemblyQualifiedName, methodName);
+            if (methodInfo.IsStatic)
+            {
+                var func = (Func<object, string>)Delegate.CreateDelegate(typeof(Func<object, string>), methodInfo);
+
+                return func;
+            }
+            else
+            {
+                var instantiatedObject = ObjectCreator.CreateInstance(assemblyQualifiedName);
+                var func = (Func<object, string>)Delegate.CreateDelegate(typeof(Func<object, string>), instantiatedObject, methodInfo);
+
+                return func;
+            }
+        }
+
+        private static Func<IControl, bool> CreateFuncDelegate2(string assemblyQualifiedName, string methodName)
+        {
+            var methodInfo = ObjectCreator.GetMethod(assemblyQualifiedName, methodName);
+            if (methodInfo.IsStatic)
+            {
+                var func = (Func<IControl, bool>)Delegate.CreateDelegate(typeof(Func<IControl, bool>), methodInfo);
+
+                return func;
+            }
+            else
+            {
+                var instantiatedObject = ObjectCreator.CreateInstance(assemblyQualifiedName);
+                var func = (Func<IControl, bool>)Delegate.CreateDelegate(typeof(Func<IControl, bool>), instantiatedObject, methodInfo);
+
+                return func;
+            }
+        }
+
+        private static Func<IControl, Rectangle> CreateFuncDelegate3(string assemblyQualifiedName, string methodName)
+        {
+            var methodInfo = ObjectCreator.GetMethod(assemblyQualifiedName, methodName);
+            if (methodInfo.IsStatic)
+            {
+                var func = (Func<IControl, Rectangle>)Delegate.CreateDelegate(typeof(Func<IControl, Rectangle>), methodInfo);
+
+                return func;
+            }
+            else
+            {
+                var instantiatedObject = ObjectCreator.CreateInstance(assemblyQualifiedName);
+                var func = (Func<IControl, Rectangle>)Delegate.CreateDelegate(typeof(Func<IControl, Rectangle>), instantiatedObject, methodInfo);
+
+                return func;
             }
         }
 

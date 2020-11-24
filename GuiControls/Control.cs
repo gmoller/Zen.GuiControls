@@ -176,7 +176,7 @@ namespace Zen.GuiControls
             {
                 var assemblyQualifiedName1 = split[1].Trim(); // Game1.EventHandlers, Game1
                 var methodName = split[2].Trim(); // ApplySettings
-                var action = ObjectCreator.CreateActionDelegate(assemblyQualifiedName1, methodName);
+                var action = StateDictionary.CreateActionDelegate(assemblyQualifiedName1, methodName);
 
                 var assemblyQualifiedName2 = split[0].Trim(); // Zen.GuiControls.PackagesClasses.ControlClick, Zen.GuiControls
                 var instantiatedObject2 = ObjectCreator.CreateInstance(assemblyQualifiedName2, action);
@@ -194,7 +194,7 @@ namespace Zen.GuiControls
                 {
                     var methodName = split[0].Trim();
                     var assemblyQualifiedName1 = $"{callingTypeFullName}, {callingAssemblyFullName}";
-                    var action = ObjectCreator.CreateActionDelegate(assemblyQualifiedName1, methodName);
+                    var action = StateDictionary.CreateActionDelegate(assemblyQualifiedName1, methodName);
 
                     var assemblyQualifiedName2 = outerMethod;
                     var instantiatedObject2 = ObjectCreator.CreateInstance(assemblyQualifiedName2, action);
@@ -208,7 +208,7 @@ namespace Zen.GuiControls
                     var className = split[^2].Trim(); // MainFrameEventHandlers
                     var nameSpace = innerMethod.Replace($".{methodName}", string.Empty).Replace($".{className}", string.Empty); // PhoenixGamePresentation.Views.SettlementViewComposite
                     var assemblyQualifiedName1 = $"{nameSpace}.{className}, {callingAssemblyFullName}"; // PhoenixGamePresentation.Views.SettlementViewComposite.MainFrameEventHandlers, PhoenixGamePresentation
-                    var action = ObjectCreator.CreateActionDelegate(assemblyQualifiedName1, methodName);
+                    var action = StateDictionary.CreateActionDelegate(assemblyQualifiedName1, methodName);
 
                     var assemblyQualifiedName2 = outerMethod; // Zen.GuiControls.PackagesClasses.ControlClick, Zen.GuiControls
                     var instantiatedObject2 = ObjectCreator.CreateInstance(assemblyQualifiedName2, action);
@@ -263,9 +263,21 @@ namespace Zen.GuiControls
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="textures"></param>
+        public void AddTextures(List<Texture> textures)
+        {
+            foreach (var texture in textures)
+            {
+                AddTexture(texture.TextureName, texture);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <param name="textureName"></param>
         /// <param name="texture"></param>
-        protected void AddTexture(string textureName, Texture texture)
+        public void AddTexture(string textureName, Texture texture)
         {
             // up-sert
             Textures[textureName] = texture;
@@ -342,7 +354,7 @@ namespace Zen.GuiControls
             foreach (var item in Textures.Values)
             {
                 if (!item.TextureString.HasValue()) continue;
-                if (!item.IsValid()) continue;
+                if (!item.IsValid(this)) continue;
 
                 var texture = ControlHelper.GetTexture2D(item.TextureString);
                 DrawSingleTexture(spriteBatch, item, texture);
@@ -352,7 +364,7 @@ namespace Zen.GuiControls
         protected virtual void DrawSingleTexture(SpriteBatch spriteBatch, Texture item, Texture2D texture)
         {
             var sourceRectangle = ControlHelper.GetSourceRectangle(texture, item.TextureString);
-            var destinationRectangle = item.DestinationRectangle.Invoke();
+            var destinationRectangle = item.DestinationRectangle.Invoke(this);
 
             if (texture.HasValue())
             {
