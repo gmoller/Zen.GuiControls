@@ -7,7 +7,7 @@ using Zen.Utilities.ExtensionMethods;
 
 namespace Zen.GuiControls
 {
-    internal static class ControlHelper
+    public static class ControlHelper
     {
         internal static bool IsMouseOverControl(Rectangle actualDestinationRectangle, Point mousePosition, Viewport? viewport)
         {
@@ -239,6 +239,34 @@ namespace Zen.GuiControls
             };
 
             return patches;
+        }
+
+        public static bool TextureNormalIsValid(IControl control)
+        {
+            var isValid = true;
+
+            return isValid;
+        }
+
+        public static bool TextureActiveIsValid(IControl control)
+        {
+            var isValid = control.Status.HasFlag(ControlStatus.Active) && !control.Status.HasFlag(ControlStatus.Disabled);
+
+            return isValid;
+        }
+
+        public static bool TextureHoverIsValid(IControl control)
+        {
+            var isValid = control.Status.HasFlag(ControlStatus.MouseOver) && !control.Status.HasFlag(ControlStatus.Disabled);
+
+            return isValid;
+        }
+
+        public static bool TextureDisabledIsValid(IControl control)
+        {
+            var isValid = control.Status.HasFlag(ControlStatus.Disabled);
+
+            return isValid;
         }
     }
 }

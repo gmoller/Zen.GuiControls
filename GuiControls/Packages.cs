@@ -35,6 +35,7 @@ namespace Zen.GuiControls
             foreach (var package in PackagesList)
             {
                 controlStatus = package.Update(control, input, deltaTime);
+                control.Status = controlStatus;
             }
 
             return controlStatus;

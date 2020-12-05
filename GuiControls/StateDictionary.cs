@@ -194,7 +194,11 @@ namespace Zen.GuiControls
                 {
                     var s2 = s.RemoveFirstAndLastCharacters();
                     var s3 = s2.Split(':');
-                    var texture = new Texture(s3[0], s3[1], TranslateIsValidFunc(s3[2], callingTypeFullName, callingAssemblyFullName), TranslateDestinationFunc(s3[3], callingTypeFullName, callingAssemblyFullName));
+                    var texture = new Texture(
+                        s3[0],
+                        s3[1],
+                        TranslateIsValidFunc(s3[2], propertyName, callingTypeFullName, callingAssemblyFullName),
+                        TranslateDestinationFunc(s3[3], propertyName, callingTypeFullName, callingAssemblyFullName));
                     listOfTextures.Add(texture);
                 }
             }
@@ -276,44 +280,15 @@ namespace Zen.GuiControls
 
         private static Func<object, string> TranslateGetTextFunc(string getTextFuncAsString, string propertyName, string callingTypeFullName, string callingAssemblyFullName) // 'Game1.EventHandlers, Game1 - GetTextFunc' or 'Game1.EventHandlers.GetTextFunc' or 'GetTextFunc'
         {
+            var firstAndLastCharactersRemoved = getTextFuncAsString.RemoveFirstAndLastCharacters(); // remove single quotes
+
             try
             {
-                var firstAndLastCharactersRemoved = getTextFuncAsString.RemoveFirstAndLastCharacters(); // remove single quotes
-                var split = firstAndLastCharactersRemoved.Split('-');
+                var assemblyQualifiedName = GetAssemblyQualifiedName(firstAndLastCharactersRemoved, callingTypeFullName, callingAssemblyFullName);
+                var methodName = GetMethodName(firstAndLastCharactersRemoved);
+                var func = CreateFuncDelegate(assemblyQualifiedName, methodName);
 
-                if (split.Length > 1) // if 'Game1.EventHandlers, Game1 - GetTextFunc'
-                {
-                    var assemblyQualifiedName = split[0].Trim(); // Game1.EventHandlers, Game1
-                    var methodName = split[1].Trim(); // GetTextFunc
-                    var func = CreateFuncDelegate(assemblyQualifiedName, methodName);
-
-                    return func;
-                }
-
-                split = split[0].Split('.');
-
-                if (split.Length == 1)
-                {
-                    var methodName = split[0].Trim();
-                    var assemblyQualifiedName = $"{callingTypeFullName}, {callingAssemblyFullName}";
-                    var func = CreateFuncDelegate(assemblyQualifiedName, methodName);
-
-                    return func;
-                }
-
-                // else: 'Game1.EventHandlers.GetTextFunc'
-                if (split.Length > 1)
-                {
-                    var methodName = split[^1].Trim(); // GetTextFunc
-                    var className = split[^2].Trim(); // EventHandlers
-                    var nameSpace = firstAndLastCharactersRemoved.Replace($".{methodName}", string.Empty).Replace($".{className}", string.Empty); // Game1
-                    var assemblyQualifiedName = $"{nameSpace}.{className}, {callingAssemblyFullName}"; // Game1.EventHandlers, Game1
-                    var func = CreateFuncDelegate(assemblyQualifiedName, methodName);
-
-                    return func;
-                }
-
-                throw new Exception($"Failed to convert [{getTextFuncAsString}] for property [{propertyName}] to Func.");
+                return func;
             }
             catch (Exception e)
             {
@@ -321,22 +296,93 @@ namespace Zen.GuiControls
             }
         }
 
-        private Func<IControl, bool> TranslateIsValidFunc(string getIsValidFuncAsString, string callingTypeFullName, string callingAssemblyFullName)
+        private static Func<IControl, bool> TranslateIsValidFunc(string getIsValidFuncAsString, string propertyName, string callingTypeFullName, string callingAssemblyFullName)
         {
-            var methodName = getIsValidFuncAsString.Trim();
-            var assemblyQualifiedName = $"{callingTypeFullName}, {callingAssemblyFullName}";
-            var func = CreateFuncDelegate2(assemblyQualifiedName, methodName);
+            try
+            {
+                var assemblyQualifiedName = GetAssemblyQualifiedName(getIsValidFuncAsString, callingTypeFullName, callingAssemblyFullName);
+                var methodName = GetMethodName(getIsValidFuncAsString);
+                var func = CreateFuncDelegate2(assemblyQualifiedName, methodName);
 
-            return func;
+                return func;
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Failed to convert [{getIsValidFuncAsString}] for property [{propertyName}] to Func.", e);
+            }
         }
 
-        private Func<IControl, Rectangle> TranslateDestinationFunc(string getDestinationFuncAsString, string callingTypeFullName, string callingAssemblyFullName)
+        private static Func<IControl, Rectangle> TranslateDestinationFunc(string getDestinationFuncAsString, string propertyName, string callingTypeFullName, string callingAssemblyFullName)
         {
-            var methodName = getDestinationFuncAsString.Trim();
-            var assemblyQualifiedName = $"{callingTypeFullName}, {callingAssemblyFullName}";
-            var func = CreateFuncDelegate3(assemblyQualifiedName, methodName);
+            try
+            {
+                    var assemblyQualifiedName = GetAssemblyQualifiedName(getDestinationFuncAsString, callingTypeFullName, callingAssemblyFullName);
+                var methodName = GetMethodName(getDestinationFuncAsString);
+                var func = CreateFuncDelegate3(assemblyQualifiedName, methodName);
 
-            return func;
+                return func;
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Failed to convert [{getDestinationFuncAsString}] for property [{propertyName}] to Func.", e);
+            }
+        }
+
+        private static string GetAssemblyQualifiedName(string funcDescriptor, string callingTypeFullName, string callingAssemblyFullName)
+        {
+            var split = funcDescriptor.Split('-');
+
+            if (split.Length > 1)
+            {
+                var assemblyQualifiedName = split[0].Trim();
+
+                return assemblyQualifiedName;
+            }
+
+            split = split[0].Split('.');
+
+            if (split.Length == 1)
+            {
+                var assemblyQualifiedName = $"{callingTypeFullName}, {callingAssemblyFullName}";
+
+                return assemblyQualifiedName;
+            }
+            else
+            {
+                var methodName = split[^1].Trim();
+                var className = split[^2].Trim();
+                var nameSpace = funcDescriptor.Replace($".{methodName}", string.Empty).Replace($".{className}", string.Empty);
+                var assemblyQualifiedName = $"{nameSpace}.{className}, {callingAssemblyFullName}";
+
+                return assemblyQualifiedName;
+            }
+        }
+
+        private static string GetMethodName(string funcDescriptor)
+        {
+            var split = funcDescriptor.Split('-');
+
+            if (split.Length > 1)
+            {
+                var methodName = split[1].Trim();
+
+                return methodName;
+            }
+
+            split = split[0].Split('.');
+
+            if (split.Length == 1)
+            {
+                var methodName = funcDescriptor.Trim();
+
+                return methodName;
+            }
+            else
+            {
+                var methodName = split[^1].Trim();
+
+                return methodName;
+            }
         }
 
         internal static Action<object, EventArgs> CreateActionDelegate(string assemblyQualifiedName, string methodName)

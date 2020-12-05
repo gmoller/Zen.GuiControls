@@ -9,6 +9,7 @@ using Zen.MonoGameUtilities;
 using Zen.MonoGameUtilities.ExtensionMethods;
 using Zen.Utilities;
 using Zen.Utilities.ExtensionMethods;
+using Vector2 = Microsoft.Xna.Framework.Vector2;
 
 namespace Zen.GuiControls
 {
@@ -51,7 +52,17 @@ namespace Zen.GuiControls
 
         public Color BorderColor { get; set; }
 
-        public bool Enabled { get; set; }
+        public bool Enabled
+        {
+            get => !Status.HasFlag(ControlStatus.Disabled);
+            set
+            {
+                var controlStatusAsInt = (int)Status;
+                var index = ControlStatus.Disabled.GetIndexOfEnumeration();
+                controlStatusAsInt = value ? controlStatusAsInt.UnsetBit(index) : controlStatusAsInt.SetBit(index);
+                Status = (ControlStatus)controlStatusAsInt;
+            }
+        }
 
         public bool Visible { get; set; }
 
@@ -102,7 +113,6 @@ namespace Zen.GuiControls
             BackgroundColor = Color.Transparent;
             BorderColor = Color.Transparent;
             Status = ControlStatus.None;
-            Enabled = true;
             Visible = true;
 
             Packages = new Packages();
@@ -125,7 +135,6 @@ namespace Zen.GuiControls
             BackgroundColor = other.BackgroundColor;
             BorderColor = other.BorderColor;
             Status = other.Status;
-            Enabled = other.Enabled;
             Visible = other.Visible;
             LayerDepth = other.LayerDepth;
             
@@ -172,49 +181,24 @@ namespace Zen.GuiControls
             var firstAndLastCharactersRemoved = package.RemoveFirstAndLastCharacters(); // remove single quotes
             var split = firstAndLastCharactersRemoved.Split('-');
 
+            IPackage packageToAdd;
             if (split.Length == 3)
             {
-                var assemblyQualifiedName1 = split[1].Trim(); // Game1.EventHandlers, Game1
-                var methodName = split[2].Trim(); // ApplySettings
-                var action = StateDictionary.CreateActionDelegate(assemblyQualifiedName1, methodName);
-
-                var assemblyQualifiedName2 = split[0].Trim(); // Zen.GuiControls.PackagesClasses.ControlClick, Zen.GuiControls
-                var instantiatedObject2 = ObjectCreator.CreateInstance(assemblyQualifiedName2, action);
-
-                var packageToAdd = (IPackage) instantiatedObject2;
-                AddPackage(packageToAdd);
+                packageToAdd = ThreePhase(split);
             }
             else if (split.Length == 2)
             {
-                var outerMethod = split[0].Trim(); // Zen.GuiControls.PackagesClasses.ControlClick
-                var innerMethod = split[1].Trim(); // PhoenixGamePresentation.Views.SettlementViewComposite.MainFrameEventHandlers.CloseButtonClick
+                var outerMethod = split[0].Trim();
+                var innerMethod = split[1].Trim();
                 split = innerMethod.Split('.');
 
                 if (split.Length == 1)
                 {
-                    var methodName = split[0].Trim();
-                    var assemblyQualifiedName1 = $"{callingTypeFullName}, {callingAssemblyFullName}";
-                    var action = StateDictionary.CreateActionDelegate(assemblyQualifiedName1, methodName);
-
-                    var assemblyQualifiedName2 = outerMethod;
-                    var instantiatedObject2 = ObjectCreator.CreateInstance(assemblyQualifiedName2, action);
-
-                    var packageToAdd = (IPackage)instantiatedObject2;
-                    AddPackage(packageToAdd);
+                    packageToAdd = OnePhase(split[0], outerMethod, callingTypeFullName, callingAssemblyFullName);
                 }
                 else if (split.Length > 1)
                 {
-                    var methodName = split[^1].Trim(); // CloseButtonClick
-                    var className = split[^2].Trim(); // MainFrameEventHandlers
-                    var nameSpace = innerMethod.Replace($".{methodName}", string.Empty).Replace($".{className}", string.Empty); // PhoenixGamePresentation.Views.SettlementViewComposite
-                    var assemblyQualifiedName1 = $"{nameSpace}.{className}, {callingAssemblyFullName}"; // PhoenixGamePresentation.Views.SettlementViewComposite.MainFrameEventHandlers, PhoenixGamePresentation
-                    var action = StateDictionary.CreateActionDelegate(assemblyQualifiedName1, methodName);
-
-                    var assemblyQualifiedName2 = outerMethod; // Zen.GuiControls.PackagesClasses.ControlClick, Zen.GuiControls
-                    var instantiatedObject2 = ObjectCreator.CreateInstance(assemblyQualifiedName2, action);
-
-                    var packageToAdd = (IPackage)instantiatedObject2;
-                    AddPackage(packageToAdd);
+                    packageToAdd = TwoPhase(split[^1], split[^2], innerMethod, outerMethod, callingAssemblyFullName);
                 }
                 else
                 {
@@ -225,6 +209,52 @@ namespace Zen.GuiControls
             {
                 throw new Exception($"Badly formed package string. [{package}]");
             }
+
+            AddPackage(packageToAdd);
+        }
+
+        private IPackage OnePhase(string methodName, string outerMethod, string callingTypeFullName, string callingAssemblyFullName)
+        {
+            var assemblyQualifiedName1 = $"{callingTypeFullName}, {callingAssemblyFullName}";
+            methodName = methodName.Trim();
+            var action = StateDictionary.CreateActionDelegate(assemblyQualifiedName1, methodName);
+
+            var assemblyQualifiedName2 = outerMethod;
+            var instantiatedObject2 = ObjectCreator.CreateInstance(assemblyQualifiedName2, action);
+
+            var packageToAdd = (IPackage)instantiatedObject2;
+
+            return packageToAdd;
+        }
+
+        private IPackage TwoPhase(string methodName, string className, string innerMethod, string outerMethod, string callingAssemblyFullName)
+        {
+            methodName = methodName.Trim();
+            className = className.Trim();
+            var nameSpace = innerMethod.Replace($".{methodName}", string.Empty).Replace($".{className}", string.Empty);
+            var assemblyQualifiedName1 = $"{nameSpace}.{className}, {callingAssemblyFullName}";
+            var action = StateDictionary.CreateActionDelegate(assemblyQualifiedName1, methodName);
+
+            var assemblyQualifiedName2 = outerMethod;
+            var instantiatedObject = ObjectCreator.CreateInstance(assemblyQualifiedName2, action);
+
+            var packageToAdd = (IPackage)instantiatedObject;
+
+            return packageToAdd;
+        }
+
+        private IPackage ThreePhase(string[] split)
+        {
+            var assemblyQualifiedName1 = split[1].Trim();
+            var methodName = split[2].Trim();
+            var action = StateDictionary.CreateActionDelegate(assemblyQualifiedName1, methodName);
+
+            var assemblyQualifiedName2 = split[0].Trim();
+            var instantiatedObject2 = ObjectCreator.CreateInstance(assemblyQualifiedName2, action);
+
+            var packageToAdd = (IPackage)instantiatedObject2;
+
+            return packageToAdd;
         }
 
         /// <summary>
@@ -310,19 +340,26 @@ namespace Zen.GuiControls
         {
             Input = input;
 
-            if (!Enabled)
+            if (Status.HasFlag(ControlStatus.Disabled))
             {
                 Packages.Reset();
-                Status = ControlStatus.None;
+                Status = ControlStatus.Disabled;
+
                 return;
             }
 
-            Status = Status switch
+            if (ControlHelper.IsMouseOverControl(Bounds, input.MousePosition, viewport))
             {
-                ControlStatus.None when ControlHelper.IsMouseOverControl(Bounds, input.MousePosition, viewport) => ControlStatus.MouseOver,
-                ControlStatus.MouseOver when !ControlHelper.IsMouseOverControl(Bounds, input.MousePosition, viewport) => ControlStatus.None,
-                _ => Status
-            };
+                var controlStatusAsInt = (int)Status;
+                controlStatusAsInt = controlStatusAsInt.SetBit(ControlStatus.MouseOver.GetIndexOfEnumeration());
+                Status = (ControlStatus)controlStatusAsInt;
+            }
+            else if (Status.HasFlag(ControlStatus.MouseOver))
+            {
+                var controlStatusAsInt = (int)Status;
+                controlStatusAsInt = controlStatusAsInt.UnsetBit(ControlStatus.MouseOver.GetIndexOfEnumeration());
+                Status = (ControlStatus)controlStatusAsInt;
+            }
 
             Status = Packages.Update(this, input, deltaTime);
 

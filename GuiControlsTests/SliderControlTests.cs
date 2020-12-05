@@ -52,7 +52,7 @@ slrTest : Slider
             Assert.AreEqual(Color.Blue, ctrl1.Color);
             Assert.AreEqual(Color.Green, ctrl1.BackgroundColor);
             Assert.AreEqual(Color.Red, ctrl1.BorderColor);
-            Assert.AreEqual(false, ctrl1.Enabled);
+            Assert.AreEqual(true, ctrl1.Status.HasFlag(ControlStatus.Disabled));
             Assert.AreEqual(false, ctrl1.Visible);
             Assert.AreEqual(0.1f, ctrl1.LayerDepth);
 

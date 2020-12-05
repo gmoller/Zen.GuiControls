@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -29,7 +31,7 @@ namespace Zen.GuiControls.TheControls
         public string TextureNormal
         {
             get => Textures.ContainsKey("TextureNormal") ? Textures["TextureNormal"].TextureString : string.Empty;
-            set => AddTexture("TextureNormal", new Texture("TextureNormal", value, control => true, control => Bounds));
+            set => AddTexture("TextureNormal", new Texture("TextureNormal", value, ControlHelper.TextureNormalIsValid, control => Bounds));
         }
 
         /// <summary>
@@ -50,6 +52,37 @@ namespace Zen.GuiControls.TheControls
             BorderSizeBottom = other.BorderSizeBottom;
             BorderSizeLeft = other.BorderSizeLeft;
             BorderSizeRight = other.BorderSizeRight;
+        }
+
+        internal static Frame Create(string name, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
+        {
+            try
+            {
+                var control = new Frame(name);
+                control = Update(control, state, callingTypeFullName, callingAssemblyFullName);
+
+                return control;
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Failed to create frame [{name}]", e);
+            }
+        }
+
+        internal static Frame Update(Frame control, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
+        {
+            control.TextureNormal = state.GetAsString("TextureNormal", control.TextureNormal);
+            control.BorderSizeTop = state.GetAsInt32("BorderSize", control.BorderSizeTop);
+            control.BorderSizeBottom = state.GetAsInt32("BorderSize", control.BorderSizeBottom);
+            control.BorderSizeLeft = state.GetAsInt32("BorderSize", control.BorderSizeLeft);
+            control.BorderSizeRight = state.GetAsInt32("BorderSize", control.BorderSizeRight);
+            control.BorderSizeTop = state.GetAsInt32("BorderSizeTop", control.BorderSizeTop);
+            control.BorderSizeBottom = state.GetAsInt32("BorderSizeBottom", control.BorderSizeBottom);
+            control.BorderSizeLeft = state.GetAsInt32("BorderSizeLeft", control.BorderSizeLeft);
+            control.BorderSizeRight = state.GetAsInt32("BorderSizeRight", control.BorderSizeRight);
+            control.AddTextures(state.GetAsListOfTextures("Textures", callingTypeFullName, callingAssemblyFullName, new List<Texture>()));
+
+            return control;
         }
 
         public override IControl Clone()

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -23,25 +24,25 @@ namespace Zen.GuiControls.TheControls
         public string TextureNormal
         {
             get => Textures.ContainsKey("TextureNormal") ? Textures["TextureNormal"].TextureString : string.Empty;
-            set => AddTexture("TextureNormal", new Texture("TextureNormal", value, control => true, control => Bounds));
+            set => AddTexture("TextureNormal", new Texture("TextureNormal", value, ControlHelper.TextureNormalIsValid, control => Bounds));
         }
 
         public string TextureActive
         {
             get => Textures.ContainsKey("TextureActive") ? Textures["TextureActive"].TextureString : string.Empty;
-            set => AddTexture("TextureActive", new Texture("TextureActive", value, control => Status == ControlStatus.Active && Enabled, control => Bounds));
+            set => AddTexture("TextureActive", new Texture("TextureActive", value, ControlHelper.TextureActiveIsValid, control => Bounds));
         }
 
         public string TextureHover
         {
             get => Textures.ContainsKey("TextureHover") ? Textures["TextureHover"].TextureString : string.Empty;
-            set => AddTexture("TextureHover", new Texture("TextureHover", value, control => Status == ControlStatus.MouseOver && Enabled, control => Bounds));
+            set => AddTexture("TextureHover", new Texture("TextureHover", value, ControlHelper.TextureHoverIsValid, control => Bounds));
         }
 
         public string TextureDisabled
         {
             get => Textures.ContainsKey("TextureDisabled") ? Textures["TextureDisabled"].TextureString : string.Empty;
-            set => AddTexture("TextureDisabled", new Texture("TextureDisabled", value, control => !Enabled, control => Bounds));
+            set => AddTexture("TextureDisabled", new Texture("TextureDisabled", value, ControlHelper.TextureDisabledIsValid, control => Bounds));
         }
 
         /// <summary>
@@ -65,6 +66,38 @@ namespace Zen.GuiControls.TheControls
             TextShadowColor = other.TextShadowColor;
             Scale = other.Scale;
             FontName = other.FontName;
+        }
+
+        internal static Label Create(string name, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
+        {
+            try
+            {
+                var control = new Label(name);
+                control = Update(control, state, callingTypeFullName, callingAssemblyFullName);
+
+                return control;
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Failed to create label [{name}]", e);
+            }
+        }
+
+        internal static Label Update(Label control, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
+        {
+            control.FontName = state.GetAsString("FontName", control.FontName);
+            control.ContentAlignment = state.GetAsAlignment("ContentAlignment", control.ContentAlignment);
+            control.Text = state.GetAsString("Text", control.Text);
+            control.GetTextFunc = state.GetAsGetTextFunc("GetTextFunc", callingTypeFullName, callingAssemblyFullName, control.GetTextFunc);
+            control.TextShadowColor = state.GetAsColor("TextShadowColor", control.TextShadowColor);
+            control.Scale = state.GetAsSingle("Scale", control.Scale);
+            control.TextureNormal = state.GetAsString("TextureNormal", control.TextureNormal);
+            control.TextureHover = state.GetAsString("TextureHover", control.TextureHover);
+            control.TextureActive = state.GetAsString("TextureActive", control.TextureActive);
+            control.TextureDisabled = state.GetAsString("TextureDisabled", control.TextureDisabled);
+            control.AddTextures(state.GetAsListOfTextures("Textures", callingTypeFullName, callingAssemblyFullName, new List<Texture>()));
+
+            return control;
         }
 
         public override IControl Clone()

@@ -146,57 +146,73 @@ namespace Zen.GuiControls
             switch (type)
             {
                 case "Label":
-                    control = InstantiateLabel(name, state, callingTypeFullName, callingAssemblyFullName);
+                    control = Label.Create(name, state, callingTypeFullName, callingAssemblyFullName);
+                    control = (Label)UpdateGenericProperties(control, state);
                     break;
                 case "Button":
-                    control = InstantiateButton(name, state, callingTypeFullName, callingAssemblyFullName);
+                    control = Button.Create(name, state, callingTypeFullName, callingAssemblyFullName);
+                    control = (Button)UpdateGenericProperties(control, state);
                     break;
                 case "Frame":
-                    control = InstantiateFrame(name, state, callingTypeFullName, callingAssemblyFullName);
+                    control = Frame.Create(name, state, callingTypeFullName, callingAssemblyFullName);
+                    control = (Frame)UpdateGenericProperties(control, state);
                     break;
                 case "Image":
-                    control = InstantiateImage(name, state, callingTypeFullName, callingAssemblyFullName);
+                    control = Image.Create(name, state, callingTypeFullName, callingAssemblyFullName);
+                    control = (Image)UpdateGenericProperties(control, state);
                     break;
                 case "Slider":
-                    control = InstantiateSlider(name, state, callingTypeFullName, callingAssemblyFullName);
+                    control = Slider.Create(name, state, callingTypeFullName, callingAssemblyFullName);
+                    control = (Slider)UpdateGenericProperties(control, state);
+                    break;
+                case "TextBox":
+                    control = TextBox.Create(name, state, callingTypeFullName, callingAssemblyFullName);
+                    control = (TextBox)UpdateGenericProperties(control, state);
                     break;
                 default:
                     if (templates.ContainsKey(type))
                     {
                         var template = templates[type];
-                        if (template is Label lbl)
+                        switch (template)
                         {
-                            control = lbl.Clone();
-                            control.Name = name;
-                            control = UpdateLabel((Label)control, state, callingTypeFullName, callingAssemblyFullName);
-                        }
-                        else if (template is Button btn)
-                        {
-                            control = btn.Clone();
-                            control.Name = name;
-                            control = UpdateButton((Button)control, state, callingTypeFullName, callingAssemblyFullName);
-                        }
-                        else if (template is Frame frm)
-                        {
-                            control = frm.Clone();
-                            control.Name = name;
-                            control = UpdateFrame((Frame)control, state, callingTypeFullName, callingAssemblyFullName);
-                        }
-                        else if (template is Image img)
-                        {
-                            control = img.Clone();
-                            control.Name = name;
-                            control = UpdateImage((Image)control, state, callingTypeFullName, callingAssemblyFullName);
-                        }
-                        else if (template is Slider slr)
-                        {
-                            control = slr.Clone();
-                            control.Name = name;
-                            control = UpdateSlider((Slider)control, state, callingTypeFullName, callingAssemblyFullName);
-                        }
-                        else
-                        {
-                            throw new ArgumentOutOfRangeException(nameof(template), template, $"ControlType {template.GetType()} templating is not supported.");
+                            case Label lbl:
+                                control = lbl.Clone();
+                                control.Name = name;
+                                control = Label.Update((Label)control, state, callingTypeFullName, callingAssemblyFullName);
+                                control = (Label)UpdateGenericProperties(control, state);
+                                break;
+                            case Button btn:
+                                control = btn.Clone();
+                                control.Name = name;
+                                control = Button.Update((Button)control, state, callingTypeFullName, callingAssemblyFullName);
+                                control = (Button)UpdateGenericProperties(control, state);
+                                break;
+                            case Frame frm:
+                                control = frm.Clone();
+                                control.Name = name;
+                                control = Frame.Update((Frame)control, state, callingTypeFullName, callingAssemblyFullName);
+                                control = (Frame)UpdateGenericProperties(control, state);
+                                break;
+                            case Image img:
+                                control = img.Clone();
+                                control.Name = name;
+                                control = Image.Update((Image)control, state, callingTypeFullName, callingAssemblyFullName);
+                                control = (Image)UpdateGenericProperties(control, state);
+                                break;
+                            case Slider slr:
+                                control = slr.Clone();
+                                control.Name = name;
+                                control = Slider.Update((Slider)control, state, callingTypeFullName, callingAssemblyFullName);
+                                control = (Slider)UpdateGenericProperties(control, state);
+                                break;
+                            case TextBox txt:
+                                control = txt.Clone();
+                                control.Name = name;
+                                control = TextBox.Update((TextBox)control, state, callingTypeFullName, callingAssemblyFullName);
+                                control = (TextBox)UpdateGenericProperties(control, state);
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException(nameof(template), template, $"ControlType {template.GetType()} templating is not supported.");
                         }
                     }
                     else
@@ -205,158 +221,6 @@ namespace Zen.GuiControls
                     }
                     break;
             }
-
-            return control;
-        }
-
-        private static Label InstantiateLabel(string name, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
-        {
-            try
-            {
-                var control = new Label(name);
-                control = UpdateLabel(control, state, callingTypeFullName, callingAssemblyFullName);
-                
-                return control;
-            }
-            catch (Exception e)
-            {
-                throw new Exception($"Failed to create label [{name}]", e);
-            }
-        }
-
-        private static Label UpdateLabel(Label control, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
-        {
-            control = (Label)UpdateGenericProperties(control, state);
-
-            control.FontName = state.GetAsString("FontName", control.FontName);
-            control.ContentAlignment = state.GetAsAlignment("ContentAlignment", control.ContentAlignment);
-            control.Text = state.GetAsString("Text", control.Text);
-            control.GetTextFunc = state.GetAsGetTextFunc("GetTextFunc", callingTypeFullName, callingAssemblyFullName, control.GetTextFunc);
-            control.TextShadowColor = state.GetAsColor("TextShadowColor", control.TextShadowColor);
-            control.Scale = state.GetAsSingle("Scale", control.Scale);
-            control.TextureNormal = state.GetAsString("TextureNormal", control.TextureNormal);
-            control.TextureHover = state.GetAsString("TextureHover", control.TextureHover);
-            control.TextureActive = state.GetAsString("TextureActive", control.TextureActive);
-            control.TextureDisabled = state.GetAsString("TextureDisabled", control.TextureDisabled);
-            control.AddTextures(state.GetAsListOfTextures("Textures", callingTypeFullName, callingAssemblyFullName, new List<Texture>()));
-
-            return control;
-        }
-
-        private static Button InstantiateButton(string name, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
-        {
-            try
-            {
-                var control = new Button(name);
-                control = UpdateButton(control, state, callingTypeFullName, callingAssemblyFullName);
-
-                return control;
-            }
-            catch (Exception e)
-            {
-                throw new Exception($"Failed to create button [{name}]", e);
-            }
-        }
-
-        private static Button UpdateButton(Button control, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
-        {
-            control = (Button)UpdateGenericProperties(control, state);
-
-            control.TextureActive = state.GetAsString("TextureActive", control.TextureActive);
-            control.TextureHover = state.GetAsString("TextureHover", control.TextureHover);
-            control.TextureNormal = state.GetAsString("TextureNormal", control.TextureNormal);
-            control.TextureDisabled = state.GetAsString("TextureDisabled", control.TextureDisabled);
-            control.AddTextures(state.GetAsListOfTextures("Textures", callingTypeFullName, callingAssemblyFullName, new List<Texture>()));
-
-            return control;
-        }
-
-        private static Frame InstantiateFrame(string name, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
-        {
-            try
-            {
-                var control = new Frame(name);
-                control = UpdateFrame(control, state, callingTypeFullName, callingAssemblyFullName);
-
-                return control;
-            }
-            catch (Exception e)
-            {
-                throw new Exception($"Failed to create frame [{name}]", e);
-            }
-        }
-
-        private static Frame UpdateFrame(Frame control, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
-        {
-            control = (Frame)UpdateGenericProperties(control, state);
-
-            control.TextureNormal = state.GetAsString("TextureNormal", control.TextureNormal);
-            control.BorderSizeTop = state.GetAsInt32("BorderSize", control.BorderSizeTop);
-            control.BorderSizeBottom = state.GetAsInt32("BorderSize", control.BorderSizeBottom);
-            control.BorderSizeLeft = state.GetAsInt32("BorderSize", control.BorderSizeLeft);
-            control.BorderSizeRight = state.GetAsInt32("BorderSize", control.BorderSizeRight);
-            control.BorderSizeTop = state.GetAsInt32("BorderSizeTop", control.BorderSizeTop);
-            control.BorderSizeBottom = state.GetAsInt32("BorderSizeBottom", control.BorderSizeBottom);
-            control.BorderSizeLeft = state.GetAsInt32("BorderSizeLeft", control.BorderSizeLeft);
-            control.BorderSizeRight = state.GetAsInt32("BorderSizeRight", control.BorderSizeRight);
-            control.AddTextures(state.GetAsListOfTextures("Textures", callingTypeFullName, callingAssemblyFullName, new List<Texture>()));
-
-            return control;
-        }
-
-        private static IControl InstantiateImage(string name, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
-        {
-            try
-            {
-                var control = new Image(name);
-                control = UpdateImage(control, state, callingTypeFullName, callingAssemblyFullName);
-
-                return control;
-            }
-            catch (Exception e)
-            {
-                throw new Exception($"Failed to create image [{name}]", e);
-            }
-        }
-
-        private static Image UpdateImage(Image control, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
-        {
-            control = (Image)UpdateGenericProperties(control, state);
-
-            control.TextureNormal = state.GetAsString("TextureNormal", control.TextureNormal);
-            control.AddTextures(state.GetAsListOfTextures("Textures", callingTypeFullName, callingAssemblyFullName, new List<Texture>()));
-
-            return control;
-        }
-
-        private static IControl InstantiateSlider(string name, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
-        {
-            try
-            {
-                var control = new Slider(name);
-                control = UpdateSlider(control, state, callingTypeFullName, callingAssemblyFullName);
-
-                return control;
-            }
-            catch (Exception e)
-            {
-                throw new Exception($"Failed to create slider [{name}]", e);
-            }
-        }
-
-        private static Slider UpdateSlider(Slider control, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
-        {
-            control = (Slider)UpdateGenericProperties(control, state);
-
-            control.GripSize = state.GetAsPointI("GripSize", control.GripSize);
-            control.TextureNormal = state.GetAsString("TextureNormal", control.TextureNormal);
-            control.TextureGripNormal = state.GetAsString("TextureGripNormal", control.TextureGripNormal);
-            control.TextureGripHover = state.GetAsString("TextureGripHover", control.TextureGripHover);
-            control.MinimumValue = state.GetAsInt32("MinimumValue", control.MinimumValue);
-            control.MaximumValue = state.GetAsInt32("MaximumValue", control.MaximumValue);
-            control.CurrentValue = state.GetAsInt32("CurrentValue", control.CurrentValue);
-            control.SlidePath = state.GetAsListOfPointI("SlidePath", control.SlidePath);
-            control.AddTextures(state.GetAsListOfTextures("Textures", callingTypeFullName, callingAssemblyFullName, new List<Texture>()));
 
             return control;
         }

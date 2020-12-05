@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Zen.GuiControls.TheControls
 {
@@ -21,6 +23,29 @@ namespace Zen.GuiControls.TheControls
 
         private Image(Image other) : base(other)
         {
+        }
+
+        internal static IControl Create(string name, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
+        {
+            try
+            {
+                var control = new Image(name);
+                control = Update(control, state, callingTypeFullName, callingAssemblyFullName);
+
+                return control;
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Failed to create image [{name}]", e);
+            }
+        }
+
+        internal static Image Update(Image control, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
+        {
+            control.TextureNormal = state.GetAsString("TextureNormal", control.TextureNormal);
+            control.AddTextures(state.GetAsListOfTextures("Textures", callingTypeFullName, callingAssemblyFullName, new List<Texture>()));
+
+            return control;
         }
 
         public override IControl Clone()

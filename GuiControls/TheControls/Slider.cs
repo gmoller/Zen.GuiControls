@@ -30,7 +30,7 @@ namespace Zen.GuiControls.TheControls
         public string TextureNormal
         {
             get => Textures.ContainsKey("TextureNormal") ? Textures["TextureNormal"].TextureString : string.Empty;
-            set => AddTexture("TextureNormal", new Texture("TextureNormal", value, control => true, control => Bounds));
+            set => AddTexture("TextureNormal", new Texture("TextureNormal", value, ControlHelper.TextureNormalIsValid, control => Bounds));
         }
 
         public string TextureGripNormal
@@ -47,7 +47,9 @@ namespace Zen.GuiControls.TheControls
 
         private bool TextureGripHoverIsValid(IControl control)
         {
-            var isValid = Status == ControlStatus.MouseOver && GetDestination(control).Contains(Input.Mouse.Location) && Enabled;
+            var isValid = control.Status.HasFlag(ControlStatus.MouseOver) &&
+                          GetDestination(control).Contains(Input.Mouse.Location) &&
+                          !control.Status.HasFlag(ControlStatus.Disabled);
 
             return isValid;
         }
@@ -75,14 +77,41 @@ namespace Zen.GuiControls.TheControls
 
         private Slider(Slider other) : base(other)
         {
-            //TextureName = other.TextureName;
-            //TextureGripNormal = other.TextureGripNormal;
-            //TextureGripHover = other.TextureGripHover;
             GripSize = other.GripSize;
             MinimumValue = other.MinimumValue;
             MaximumValue = other.MaximumValue;
             CurrentValue = other.CurrentValue;
             SlidePath = other.SlidePath;
+        }
+
+        internal static IControl Create(string name, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
+        {
+            try
+            {
+                var control = new Slider(name);
+                control = Update(control, state, callingTypeFullName, callingAssemblyFullName);
+
+                return control;
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Failed to create slider [{name}]", e);
+            }
+        }
+
+        internal static Slider Update(Slider control, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)
+        {
+            control.GripSize = state.GetAsPointI("GripSize", control.GripSize);
+            control.TextureNormal = state.GetAsString("TextureNormal", control.TextureNormal);
+            control.TextureGripNormal = state.GetAsString("TextureGripNormal", control.TextureGripNormal);
+            control.TextureGripHover = state.GetAsString("TextureGripHover", control.TextureGripHover);
+            control.MinimumValue = state.GetAsInt32("MinimumValue", control.MinimumValue);
+            control.MaximumValue = state.GetAsInt32("MaximumValue", control.MaximumValue);
+            control.CurrentValue = state.GetAsInt32("CurrentValue", control.CurrentValue);
+            control.SlidePath = state.GetAsListOfPointI("SlidePath", control.SlidePath);
+            control.AddTextures(state.GetAsListOfTextures("Textures", callingTypeFullName, callingAssemblyFullName, new List<Texture>()));
+
+            return control;
         }
 
         public override IControl Clone()

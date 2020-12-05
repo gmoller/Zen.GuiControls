@@ -3,16 +3,16 @@ using Zen.Input;
 
 namespace Zen.GuiControls.PackagesClasses
 {
-    public class ControlDrag : IPackage
+    public class KeyPressed : IPackage
     {
         private readonly Action<object, EventArgs> _action;
 
-        public ControlDrag()
+        public KeyPressed()
         {
             _action = null;
         }
 
-        public ControlDrag(Action<object, EventArgs> action)
+        public KeyPressed(Action<object, EventArgs> action)
         {
             _action = action;
         }
@@ -23,15 +23,15 @@ namespace Zen.GuiControls.PackagesClasses
 
         public ControlStatus Update(IControl control, InputHandler input, float deltaTime)
         {
-            if (control.Status.HasFlag(ControlStatus.MouseOver) && input.IsLeftMouseButtonDown && input.MouseHasMoved)
+            if (input.KeyPressed && control.Status.HasFlag(ControlStatus.HasFocus))
             {
-                OnDrag(control, new MouseEventArgs(input.Mouse, null, deltaTime));
+                OnKeyPressed(control, new KeyboardEventArgs(input.Keyboard, input.Keyboard.Keys[0], null, deltaTime));
             }
 
             return control.Status;
         }
 
-        private void OnDrag(IControl control, EventArgs e)
+        private void OnKeyPressed(IControl control, EventArgs e)
         {
             _action?.Invoke(control, e);
         }

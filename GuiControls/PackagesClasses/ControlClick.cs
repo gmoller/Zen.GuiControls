@@ -1,5 +1,6 @@
 ﻿using System;
 using Zen.Input;
+using Zen.Utilities.ExtensionMethods;
 
 namespace Zen.GuiControls.PackagesClasses
 {
@@ -28,44 +29,57 @@ namespace Zen.GuiControls.PackagesClasses
 
         public ControlStatus Update(IControl control, InputHandler input, float deltaTime)
         {
-            ControlStatus returnStatus = control.Status;
-
-            if (control.Status == ControlStatus.Active)
+            if (control.Status.HasFlag(ControlStatus.Active))
             {
                 _currentCooldownTimeInMilliseconds -= deltaTime;
                 if (_currentCooldownTimeInMilliseconds <= 0.0f)
                 {
-                    returnStatus = OnClickComplete();
+                    return OnClickComplete(control.Status);
                 }
+
+                return control.Status;
             }
 
-            if (control.Status != ControlStatus.Active)
+            if (!input.IsLeftMouseButtonPressed) return control.Status;
+
+            // left mouse button clicked
+            if (control.Status.HasFlag(ControlStatus.MouseOver))
             {
-                if (control.Status == ControlStatus.MouseOver)
-                {
-                    if (input.IsLeftMouseButtonReleased)
-                    {
-                        returnStatus = OnClick(control, new MouseEventArgs(input.Mouse, null, deltaTime));
-                    }
-                }
+                var returnStatus = OnClick(control, new MouseEventArgs(input.Mouse, null, deltaTime));
+
+                return returnStatus;
             }
 
-            return returnStatus;
+            // clicked off the control
+            if (!control.Status.HasFlag(ControlStatus.HasFocus)) return control.Status;
+
+            // so remove focus
+            var controlStatusAsInt = (int)control.Status;
+            controlStatusAsInt = controlStatusAsInt.UnsetBit(ControlStatus.HasFocus.GetIndexOfEnumeration());
+
+            return (ControlStatus)controlStatusAsInt;
+
         }
 
-        private ControlStatus OnClickComplete()
+        private ControlStatus OnClickComplete(ControlStatus controlStatus)
         {
             _currentCooldownTimeInMilliseconds = 0.0f;
 
-            return ControlStatus.None;
+            var controlStatusAsInt = (int)controlStatus;
+            controlStatusAsInt = controlStatusAsInt.UnsetBit(ControlStatus.Active.GetIndexOfEnumeration());
+
+            return (ControlStatus)controlStatusAsInt;
         }
 
         private ControlStatus OnClick(IControl control, EventArgs e)
         {
             _currentCooldownTimeInMilliseconds = CLICK_COOLDOWN_TIME_IN_MILLISECONDS;
-            _action.Invoke(control, e);
+            _action?.Invoke(control, e);
 
-            return ControlStatus.Active;
+            var controlStatusAsInt = (int)control.Status;
+            controlStatusAsInt = controlStatusAsInt.SetBit(ControlStatus.Active.GetIndexOfEnumeration());
+
+            return (ControlStatus)controlStatusAsInt;
         }
     }
 }
