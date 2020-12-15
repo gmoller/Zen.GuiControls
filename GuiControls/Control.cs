@@ -336,7 +336,7 @@ namespace Zen.GuiControls
             }
         }
 
-        public virtual void Update(InputHandler input, float deltaTime, Viewport? viewport = null)
+        public virtual void Update(InputHandler input, GameTime gameTime, Viewport? viewport = null)
         {
             Input = input;
 
@@ -361,9 +361,9 @@ namespace Zen.GuiControls
                 Status = (ControlStatus)controlStatusAsInt;
             }
 
-            Status = Packages.Update(this, input, deltaTime);
+            Status = Packages.Update(this, input, gameTime);
 
-            ChildControls.Update(input, deltaTime, viewport);
+            ChildControls.Update(input, gameTime, viewport);
         }
 
         public virtual void Draw(SpriteBatch spriteBatch)
@@ -388,24 +388,24 @@ namespace Zen.GuiControls
 
         private void DrawTextures(SpriteBatch spriteBatch)
         {
-            foreach (var item in Textures.Values)
+            foreach (var texture in Textures.Values)
             {
-                if (!item.TextureString.HasValue()) continue;
-                if (!item.IsValid(this)) continue;
+                if (!texture.TextureString.HasValue()) continue;
+                if (!texture.IsValid(this)) continue;
 
-                var texture = ControlHelper.GetTexture2D(item.TextureString);
-                DrawSingleTexture(spriteBatch, item, texture);
+                var texture2D = ControlHelper.GetTexture2D(texture.TextureString);
+                DrawSingleTexture(spriteBatch, texture, texture2D);
             }
         }
 
-        protected virtual void DrawSingleTexture(SpriteBatch spriteBatch, Texture item, Texture2D texture)
+        protected virtual void DrawSingleTexture(SpriteBatch spriteBatch, Texture texture, Texture2D texture2D)
         {
-            var sourceRectangle = ControlHelper.GetSourceRectangle(texture, item.TextureString);
-            var destinationRectangle = item.DestinationRectangle.Invoke(this);
+            var sourceRectangle = ControlHelper.GetSourceRectangle(texture2D, texture.TextureString);
+            var destinationRectangle = texture.DestinationRectangle.Invoke(this);
 
-            if (texture.HasValue())
+            if (texture2D.HasValue())
             {
-                spriteBatch.Draw(texture, destinationRectangle, sourceRectangle, Color, 0.0f, Vector2.Zero, SpriteEffects.None, LayerDepth);
+                spriteBatch.Draw(texture2D, destinationRectangle, sourceRectangle, Color, 0.0f, Vector2.Zero, SpriteEffects.None, LayerDepth);
             }
         }
 

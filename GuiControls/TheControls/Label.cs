@@ -113,14 +113,14 @@ namespace Zen.GuiControls.TheControls
             }
         }
 
-        public override void Update(InputHandler input, float deltaTime, Viewport? viewport = null)
+        public override void Update(InputHandler input, GameTime gameTime, Viewport? viewport = null)
         {
             if (GetTextFunc != null)
             {
                 Text = GetTextFunc(this);
             }
 
-            base.Update(input, deltaTime, viewport);
+            base.Update(input, gameTime, viewport);
         }
 
         protected override void DrawExtra(SpriteBatch spriteBatch)

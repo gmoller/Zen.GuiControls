@@ -75,11 +75,11 @@ namespace Zen.GuiControls
             }
         }
 
-        public void Update(InputHandler input, float deltaTime, Viewport? viewport)
+        public void Update(InputHandler input, GameTime gameTime, Viewport? viewport)
         {
             foreach (var childControl in ChildControlsList.Values)
             {
-                childControl.Update(input, deltaTime, viewport);
+                childControl.Update(input, gameTime, viewport);
             }
         }
 

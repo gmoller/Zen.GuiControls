@@ -61,6 +61,15 @@ namespace Zen.GuiControls.TheControls
             return isValid;
         }
 
+        private Rectangle GetDestination(IControl control)
+        {
+            var ratio = CurrentValue / (float)(MinimumValue + MaximumValue);
+            var p = Bounds.Location.ToPointI() + PointI.Lerp(SlidePath[0], SlidePath[1], ratio);
+            var rectangle = new Rectangle((int)(p.X - GripSize.X * 0.5f), (int)(p.Y - GripSize.Y * 0.5f), GripSize.X, GripSize.Y);
+
+            return rectangle;
+        }
+
         /// <summary>
         /// An wonderful little slider.
         /// </summary>
@@ -117,15 +126,6 @@ namespace Zen.GuiControls.TheControls
         public override IControl Clone()
         {
             return new Slider(this);
-        }
-
-        private Rectangle GetDestination(IControl control)
-        {
-            var ratio = CurrentValue / (float)(MinimumValue + MaximumValue);
-            var p = Bounds.Location.ToPointI() + PointI.Lerp(SlidePath[0], SlidePath[1], ratio);
-            var rectangle = new Rectangle((int)(p.X - GripSize.X * 0.5f), (int)(p.Y - GripSize.Y * 0.5f), GripSize.X, GripSize.Y);
-
-            return rectangle;
         }
 
         private static void UpdateSliderCurrentValue(object sender, EventArgs args)

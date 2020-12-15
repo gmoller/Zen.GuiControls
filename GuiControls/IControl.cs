@@ -175,7 +175,7 @@ namespace Zen.GuiControls
         void MovePosition(PointI point);
 
         void LoadContent(ContentManager content, bool loadChildrenContent = false);
-        void Update(InputHandler input, float deltaTime, Viewport? viewport = null);
+        void Update(InputHandler input, GameTime gameTime, Viewport? viewport = null);
         void Draw(Matrix? transform = null);
         void Draw(SpriteBatch spriteBatch);
     }

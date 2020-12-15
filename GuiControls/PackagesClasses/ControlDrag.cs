@@ -1,4 +1,5 @@
 ﻿using System;
+using Microsoft.Xna.Framework;
 using Zen.Input;
 
 namespace Zen.GuiControls.PackagesClasses
@@ -21,11 +22,11 @@ namespace Zen.GuiControls.PackagesClasses
         {
         }
 
-        public ControlStatus Update(IControl control, InputHandler input, float deltaTime)
+        public ControlStatus Update(IControl control, InputHandler input, GameTime gameTime)
         {
             if (control.Status.HasFlag(ControlStatus.MouseOver) && input.IsLeftMouseButtonDown && input.MouseHasMoved)
             {
-                OnDrag(control, new MouseEventArgs(input.Mouse, null, deltaTime));
+                OnDrag(control, new MouseEventArgs(input.Mouse, null, (float)gameTime.ElapsedGameTime.TotalMilliseconds));
             }
 
             return control.Status;

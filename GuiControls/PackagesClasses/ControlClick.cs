@@ -1,4 +1,5 @@
 ﻿using System;
+using Microsoft.Xna.Framework;
 using Zen.Input;
 using Zen.Utilities.ExtensionMethods;
 
@@ -27,11 +28,11 @@ namespace Zen.GuiControls.PackagesClasses
             _currentCooldownTimeInMilliseconds = 0.0f;
         }
 
-        public ControlStatus Update(IControl control, InputHandler input, float deltaTime)
+        public ControlStatus Update(IControl control, InputHandler input, GameTime gameTime)
         {
             if (control.Status.HasFlag(ControlStatus.Active))
             {
-                _currentCooldownTimeInMilliseconds -= deltaTime;
+                _currentCooldownTimeInMilliseconds -= (float)gameTime.ElapsedGameTime.TotalMilliseconds;
                 if (_currentCooldownTimeInMilliseconds <= 0.0f)
                 {
                     return OnClickComplete(control.Status);
@@ -45,7 +46,7 @@ namespace Zen.GuiControls.PackagesClasses
             // left mouse button clicked
             if (control.Status.HasFlag(ControlStatus.MouseOver))
             {
-                var returnStatus = OnClick(control, new MouseEventArgs(input.Mouse, null, deltaTime));
+                var returnStatus = OnClick(control, new MouseEventArgs(input.Mouse, null, (float)gameTime.ElapsedGameTime.TotalMilliseconds));
 
                 return returnStatus;
             }

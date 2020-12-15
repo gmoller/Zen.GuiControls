@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Microsoft.Xna.Framework;
 using Zen.Input;
 
 namespace Zen.GuiControls
@@ -28,13 +29,13 @@ namespace Zen.GuiControls
             }
         }
 
-        internal ControlStatus Update(IControl control, InputHandler input, float deltaTime)
+        internal ControlStatus Update(IControl control, InputHandler input, GameTime gameTime)
         {
             var controlStatus = control.Status;
 
             foreach (var package in PackagesList)
             {
-                controlStatus = package.Update(control, input, deltaTime);
+                controlStatus = package.Update(control, input, gameTime);
                 control.Status = controlStatus;
             }
 
