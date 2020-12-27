@@ -96,13 +96,14 @@ namespace Zen.GuiControls.TheControls
         /// A titillating little textbox.
         /// </summary>
         /// <param name="name">Name of control.</param>
-        private TextBox(string name) : base(name)
+        public TextBox(string name) : base(name)
         {
             ContentAlignment = Alignment.TopLeft;
             Text = string.Empty;
             TextShadowColor = Color.Transparent;
             Scale = 1.0f;
             FontName = string.Empty;
+            CursorPosition = 0;
             AddPackage(new ControlClick(HandleControlClick));
             AddPackage(new KeyPressed(HandleKeyPressed));
         }
@@ -114,6 +115,7 @@ namespace Zen.GuiControls.TheControls
             TextShadowColor = other.TextShadowColor;
             Scale = other.Scale;
             FontName = other.FontName;
+            CursorPosition = other.CursorPosition;
         }
 
         internal static TextBox Create(string name, StateDictionary state, string callingTypeFullName, string callingAssemblyFullName)

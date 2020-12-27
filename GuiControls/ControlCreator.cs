@@ -82,9 +82,12 @@ namespace Zen.GuiControls
                         var potentialControl = potentialControls[currentControlName];
                         var key = line.GetTextToLeftOfCharacter(':').Trim();
                         var value = line.GetTextToRightOfCharacter(':').Trim();
-                        if (value.StartsWith('%') && value.EndsWith('%'))
+                        if (value.ContainsTwoCharactersOf('%'))
                         {
-                            value = pairs[value.RemoveFirstAndLastCharacters()];
+                            // find key
+                            var key2 = value.GetTextBetweenCharacters('%');
+                            var value2 = pairs[key2];
+                            value = value.Replace($"%{key2}%", value2);
                         }
 
                         potentialControl.state[key] = value;

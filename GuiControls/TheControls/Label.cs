@@ -58,7 +58,7 @@ namespace Zen.GuiControls.TheControls
             FontName = string.Empty;
         }
 
-        protected Label(Label other) : base(other)
+        private Label(Label other) : base(other)
         {
             ContentAlignment = other.ContentAlignment;
             Text = other.Text;
