@@ -20,7 +20,8 @@ namespace Zen.GuiControls.TheControls
         private Color TextShadowColor { get; set; }
         private float Scale { get; set; }
         private string FontName { get; set; }
-        private int CursorPosition => Text.Length; //{ get; set; }
+        private int CursorPosition { get; set; }
+        private static int CursorBlinkRateMs = 500; // -1;1200;1100;1000;900;800;700;600;500;400;300;200 (none->fast)
         #endregion
 
         private string TextureNormal
@@ -58,6 +59,13 @@ namespace Zen.GuiControls.TheControls
             var isValid = control.Status.HasFlag(ControlStatus.HasFocus) &&
                           !control.Status.HasFlag(ControlStatus.Disabled);
 
+            if (isValid)
+            {
+                var foo = (int)(control.GameTime.TotalGameTime.TotalMilliseconds / CursorBlinkRateMs);
+                isValid = foo.IsEven();
+            }
+
+
             return isValid;
         }
 
@@ -74,9 +82,10 @@ namespace Zen.GuiControls.TheControls
             var font = AssetsManager.Instance.GetSpriteFont(FontName);
             var substring = Text.GetFirstCharacters(CursorPosition);
             var sizeOfText = font.MeasureString(substring);
-            var offset = DetermineOffset(font, new Vector2(Size.X, Size.Y), Text, ContentAlignment, Scale);
+            var textSize = DetermineTextSize(font, Text, Scale);
+            var offset = DetermineOffset(new Vector2(Size.X, Size.Y), textSize, ContentAlignment);
             var size = new Point(10, Bounds.Height);
-            var position = TopLeft.ToPoint() + offset.ToPoint() - new Point(size.X / 2, 0) + new Point((int)sizeOfText.X, 0);
+            var position = TopLeft.ToPoint() + offset.ToPoint() - new Point(size.X / 2, 0) + new Point((int)sizeOfText.X + 2, 0);
 
             var rectangle = new Rectangle(position, size);
 
@@ -156,7 +165,8 @@ namespace Zen.GuiControls.TheControls
         {
             var font = AssetsManager.Instance.GetSpriteFont(FontName);
 
-            var offset = DetermineOffset(font, new Vector2(Size.X, Size.Y), Text, ContentAlignment, Scale);
+            var textSize = DetermineTextSize(font, Text, Scale);
+            var offset = DetermineOffset(new Vector2(Size.X, Size.Y), textSize, ContentAlignment);
 
             // textshadow
             spriteBatch.DrawString(
@@ -183,10 +193,15 @@ namespace Zen.GuiControls.TheControls
                 LayerDepth);
         }
 
-        private static Vector2 DetermineOffset(SpriteFont font, Vector2 size, string text, Alignment contentAlignment, float scale)
+        private static Vector2 DetermineTextSize(SpriteFont font, string text, in float scale)
         {
             var textSize = font.MeasureString(text) * scale;
 
+            return textSize;
+        }
+
+        private static Vector2 DetermineOffset(Vector2 size, Vector2 textSize, Alignment contentAlignment)
+        {
             return contentAlignment switch
             {
                 Alignment.TopLeft => Vector2.Zero,
@@ -213,13 +228,15 @@ namespace Zen.GuiControls.TheControls
             txt.Status = (ControlStatus)controlStatusAsInt;
         }
 
-        private static void HandleKeyPressed(object sender, EventArgs args)
+        private void HandleKeyPressed(object sender, EventArgs args)
         {
             var txt = (TextBox)sender;
             var keyboardEventArgs = (KeyboardEventArgs)args;
 
             char keyToAdd = '\0';
             var delete = false;
+            var left = false;
+            var right = false;
             if (keyboardEventArgs.Key == Keys.Back)
             {
                 delete = true;
@@ -254,10 +271,12 @@ namespace Zen.GuiControls.TheControls
                     case Keys.Home:
                         break;
                     case Keys.Left:
+                        left = true;
                         break;
                     case Keys.Up:
                         break;
                     case Keys.Right:
+                        right = true;
                         break;
                     case Keys.Down:
                         break;
@@ -626,12 +645,32 @@ namespace Zen.GuiControls.TheControls
 
             if (keyToAdd != '\0')
             {
-                txt.Text += keyToAdd;
+                var foo = txt.Text.Substring(0, CursorPosition);
+                foo += keyToAdd;
+                foo += txt.Text.Substring(CursorPosition, txt.Text.Length - CursorPosition);
+                txt.Text = foo;
+                CursorPosition++;
             }
 
             if (delete)
             {
-                txt.Text = txt.Text.RemoveLastCharacter();
+                var foo = txt.Text.Substring(0, CursorPosition);
+                foo = foo.RemoveLastCharacter();
+                foo += txt.Text.Substring(CursorPosition, txt.Text.Length - CursorPosition);
+                txt.Text = foo;
+                CursorPosition--;
+            }
+
+            if (left)
+            {
+                CursorPosition--;
+                CursorPosition = Math.Max(0, CursorPosition);
+            }
+
+            if (right)
+            {
+                CursorPosition++;
+                CursorPosition = Math.Min(Text.Length, CursorPosition);
             }
         }
     }

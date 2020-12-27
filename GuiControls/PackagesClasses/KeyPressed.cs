@@ -9,8 +9,8 @@ namespace Zen.GuiControls.PackagesClasses
     public class KeyPressed : IPackage
     {
         private readonly Action<object, EventArgs> _action;
-        private readonly float _delayTimeBetweenSameKeyPressed1 = 125.0f;
-        private readonly float _delayTimeBetweenSameKeyPressed2 = 75.0f;
+        private readonly float _characterRepeatDelayMs = 125.0f; // 0 -> 31 (slow->fast)
+        private readonly float _characterRepeatRateMs = 75.0f; // 3;2;1;0 (long->short)
         private Keys[] _keysPressedInLastFrame;
         private double _lastTimeKeyHandled;
         private int _count;
@@ -45,7 +45,7 @@ namespace Zen.GuiControls.PackagesClasses
                     // if we have pressed the same key twice, wait some time before adding it again
                     if (_keysPressedInLastFrame.Contains(currentKey))
                     {
-                        var delayTimeBetweenSameKeyPressed = _count == 0 ? _delayTimeBetweenSameKeyPressed1 : _delayTimeBetweenSameKeyPressed2;
+                        var delayTimeBetweenSameKeyPressed = _count == 0 ? _characterRepeatDelayMs : _characterRepeatRateMs;
 
                         if (gameTime.TotalGameTime.TotalMilliseconds - _lastTimeKeyHandled > delayTimeBetweenSameKeyPressed)
                         {

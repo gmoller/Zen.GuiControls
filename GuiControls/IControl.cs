@@ -60,6 +60,8 @@ namespace Zen.GuiControls
         /// </summary>
         bool Enabled { get; set; }
 
+        GameTime GameTime { get; set; }
+
         /// <summary>
         /// Is drawn to the screen?
         /// </summary>

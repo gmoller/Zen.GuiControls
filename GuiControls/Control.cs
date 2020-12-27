@@ -64,6 +64,8 @@ namespace Zen.GuiControls
             }
         }
 
+        public GameTime GameTime { get; set; }
+
         public bool Visible { get; set; }
 
         public float LayerDepth { get; set; }
@@ -338,6 +340,7 @@ namespace Zen.GuiControls
 
         public virtual void Update(InputHandler input, GameTime gameTime, Viewport? viewport = null)
         {
+            GameTime = gameTime;
             Input = input;
 
             if (Status.HasFlag(ControlStatus.Disabled))

@@ -4,7 +4,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <AssemblyName>Zen.GuiControls</AssemblyName>
     <RootNamespace>Zen.GuiControls</RootNamespace>
-    <Version>0.1.10</Version>
+    <Version>0.1.11</Version>
     <Authors>Greg Moller</Authors>
     <Company>Zen</Company>
     <Description>A project for user controls for use with MonoGame.</Description>
